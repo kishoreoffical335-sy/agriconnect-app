@@ -6,23 +6,25 @@ import {
   SEEDED_BUYER_DEMANDS,
   SEEDED_MANDI_PRICES,
 } from '@/lib/seedData';
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { supabaseAdmin, isSupabaseServerConfigured } from '@/lib/supabaseServer';
+import { supabase as supabaseAnon, isSupabaseConfigured } from '@/lib/supabaseClient';
 
 export async function POST() {
   try {
-    if (isSupabaseConfigured && supabase) {
+    const client = isSupabaseServerConfigured ? supabaseAdmin : (isSupabaseConfigured ? supabaseAnon : null);
+    if (client) {
       // Clear transactional tables in Supabase if configured
-      await supabase.from('settlement_lines').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('settlements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('route_stops').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('pickup_routes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('lot_listings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('lots').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('farmer_listings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await client.from('settlement_lines').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await client.from('settlements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await client.from('route_stops').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await client.from('pickup_routes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await client.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await client.from('lot_listings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await client.from('lots').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await client.from('farmer_listings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
       // Re-insert initial listings
-      await supabase.from('farmer_listings').insert(SEEDED_FARMER_LISTINGS as any);
+      await client.from('farmer_listings').insert(SEEDED_FARMER_LISTINGS as any);
     }
 
     return NextResponse.json({

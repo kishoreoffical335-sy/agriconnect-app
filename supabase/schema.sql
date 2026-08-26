@@ -174,6 +174,84 @@ CREATE TABLE mandi_prices (
 );
 
 -- ====================================================================
+-- INDEXES FOR FOREIGN KEYS AND QUERY PERFORMANCE
+-- ====================================================================
+
+CREATE INDEX idx_users_fpo_id ON users(fpo_id);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_farmer_listings_farmer_id ON farmer_listings(farmer_id);
+CREATE INDEX idx_farmer_listings_status ON farmer_listings(status);
+CREATE INDEX idx_lots_fpo_id ON lots(fpo_id);
+CREATE INDEX idx_lots_status ON lots(status);
+CREATE INDEX idx_lot_listings_lot_id ON lot_listings(lot_id);
+CREATE INDEX idx_lot_listings_farmer_listing_id ON lot_listings(farmer_listing_id);
+CREATE INDEX idx_buyer_demands_buyer_id ON buyer_demands(buyer_id);
+CREATE INDEX idx_buyer_demands_status ON buyer_demands(status);
+CREATE INDEX idx_matches_lot_id ON matches(lot_id);
+CREATE INDEX idx_matches_buyer_demand_id ON matches(buyer_demand_id);
+CREATE INDEX idx_pickup_routes_match_id ON pickup_routes(match_id);
+CREATE INDEX idx_pickup_routes_fpo_id ON pickup_routes(fpo_id);
+CREATE INDEX idx_pickup_routes_logistics_id ON pickup_routes(logistics_id);
+CREATE INDEX idx_route_stops_pickup_route_id ON route_stops(pickup_route_id);
+CREATE INDEX idx_route_stops_farmer_id ON route_stops(farmer_id);
+CREATE INDEX idx_settlements_match_id ON settlements(match_id);
+CREATE INDEX idx_settlements_fpo_id ON settlements(fpo_id);
+CREATE INDEX idx_settlement_lines_settlement_id ON settlement_lines(settlement_id);
+CREATE INDEX idx_settlement_lines_farmer_id ON settlement_lines(farmer_id);
+CREATE INDEX idx_mandi_prices_crop_date ON mandi_prices(crop, date DESC);
+
+-- ====================================================================
+-- ROW LEVEL SECURITY (RLS) & POLICIES
+-- ====================================================================
+-- NOTE ON AUTHENTICATION LIMITATION:
+-- Supabase Auth (auth.uid()) is not yet integrated with front-end user sessions
+-- in this phase (the application currently uses role switching / store.currentUser).
+-- Therefore, role-based user-specific policies (e.g. auth.uid() = farmer_id)
+-- cannot be evaluated via Supabase JWTs yet.
+--
+-- Security Strategy:
+-- 1. All tables have RLS enabled.
+-- 2. Public read (SELECT) policies allow client queries for demonstration/benchmarking data.
+-- 3. Controlled write (INSERT/UPDATE/DELETE) for demo listings is enabled for the farmer vertical slice.
+-- 4. Server-side mutations use SUPABASE_SERVICE_ROLE_KEY via supabaseServer.ts, which bypasses RLS safely.
+-- 5. When Supabase Auth is integrated in future steps, user-specific auth.uid() policies will replace the demo policies.
+
+ALTER TABLE fpos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE farmer_listings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lot_listings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE buyer_demands ENABLE ROW LEVEL SECURITY;
+ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pickup_routes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE route_stops ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settlements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settlement_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mandi_prices ENABLE ROW LEVEL SECURITY;
+
+-- Read policies (SELECT)
+CREATE POLICY "Allow public read access on fpos" ON fpos FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on users" ON users FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on farmer_listings" ON farmer_listings FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on lots" ON lots FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on lot_listings" ON lot_listings FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on buyer_demands" ON buyer_demands FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on matches" ON matches FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on pickup_routes" ON pickup_routes FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on route_stops" ON route_stops FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on settlements" ON settlements FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on settlement_lines" ON settlement_lines FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on mandi_prices" ON mandi_prices FOR SELECT USING (true);
+
+-- Farmer Lot Vertical Slice Policies (INSERT/UPDATE for client demo operations)
+CREATE POLICY "Allow insert on farmer_listings" ON farmer_listings FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update on farmer_listings" ON farmer_listings FOR UPDATE USING (true);
+CREATE POLICY "Allow insert on lots" ON lots FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update on lots" ON lots FOR UPDATE USING (true);
+CREATE POLICY "Allow insert on lot_listings" ON lot_listings FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update on lot_listings" ON lot_listings FOR UPDATE USING (true);
+
+-- ====================================================================
 -- SEEDED DEMO DATA INSERTS
 -- ====================================================================
 
