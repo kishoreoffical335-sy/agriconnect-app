@@ -27,6 +27,17 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 const STORAGE_KEY = 'agriconnect_db_state_v1';
 const CURRENT_USER_KEY = 'agriconnect_current_user_v1';
 
+export function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export interface AppState {
   users: User[];
   fpos: FPO[];
@@ -70,6 +81,41 @@ export class AgriConnectStore {
     this.state = getInitialState();
     if (typeof window !== 'undefined') {
       this.loadFromStorage();
+      if (isSupabaseConfigured && supabase) {
+        this.syncFromSupabase();
+      }
+    }
+  }
+
+  public async syncFromSupabase() {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      const [listingsRes, lotsRes, lotListingsRes] = await Promise.all([
+        supabase.from('farmer_listings').select('*').order('created_at', { ascending: false }),
+        supabase.from('lots').select('*').order('created_at', { ascending: false }),
+        supabase.from('lot_listings').select('*'),
+      ]);
+
+      let stateChanged = false;
+
+      if (!listingsRes.error && Array.isArray(listingsRes.data) && listingsRes.data.length > 0) {
+        this.state.farmerListings = listingsRes.data;
+        stateChanged = true;
+      }
+      if (!lotsRes.error && Array.isArray(lotsRes.data) && lotsRes.data.length > 0) {
+        this.state.lots = lotsRes.data;
+        stateChanged = true;
+      }
+      if (!lotListingsRes.error && Array.isArray(lotListingsRes.data) && lotListingsRes.data.length > 0) {
+        this.state.lotListings = lotListingsRes.data;
+        stateChanged = true;
+      }
+
+      if (stateChanged) {
+        this.notify();
+      }
+    } catch (e) {
+      console.warn('[Supabase] Sync fallback to local store:', e);
     }
   }
 
@@ -161,7 +207,7 @@ export class AgriConnectStore {
     if (!farmer) throw new Error('No user logged in');
 
     const newListing: FarmerListing = {
-      id: `l${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: generateUUID(),
       farmer_id: farmer.id,
       crop: data.crop,
       quantity_kg: Number(data.quantity_kg),
@@ -175,6 +221,36 @@ export class AgriConnectStore {
 
     this.state.farmerListings = [newListing, ...this.state.farmerListings];
     this.notify();
+
+    // Asynchronously persist to Supabase if configured (Vertical Slice 1)
+    if (isSupabaseConfigured && supabase) {
+      (async () => {
+        try {
+          const { error } = await supabase
+            .from('farmer_listings')
+            .insert({
+              id: newListing.id,
+              farmer_id: newListing.farmer_id,
+              crop: newListing.crop,
+              quantity_kg: newListing.quantity_kg,
+              quality: newListing.quality,
+              ready_date: newListing.ready_date,
+              expected_price_per_kg: newListing.expected_price_per_kg,
+              village: newListing.village,
+              status: newListing.status,
+              created_at: newListing.created_at,
+            });
+          if (error) {
+            console.warn('[Supabase] Failed to persist farmer listing (using local fallback):', error.message);
+          } else {
+            console.log('[Supabase] Persisted farmer listing:', newListing.id);
+          }
+        } catch (err: any) {
+          console.warn('[Supabase] Farmer listing insert error (using local fallback):', err?.message || err);
+        }
+      })();
+    }
+
     return newListing;
   }
 
@@ -215,7 +291,7 @@ export class AgriConnectStore {
     );
 
     const newLot: Lot = {
-      id: `lot-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: generateUUID(),
       fpo_id: fpoId,
       crop,
       total_quantity_kg: totalQuantity,
@@ -226,7 +302,7 @@ export class AgriConnectStore {
 
     // Junction records
     const newLotListings: LotListing[] = selectedListings.map((l) => ({
-      id: `ll-${Date.now()}-${l.id}`,
+      id: generateUUID(),
       lot_id: newLot.id,
       farmer_listing_id: l.id,
       quantity_kg: l.quantity_kg,
@@ -241,6 +317,46 @@ export class AgriConnectStore {
     this.state.lots = [newLot, ...this.state.lots];
     this.state.lotListings = [...this.state.lotListings, ...newLotListings];
     this.notify();
+
+    // Asynchronously persist to Supabase if configured (Vertical Slice 1)
+    if (isSupabaseConfigured && supabase) {
+      (async () => {
+        try {
+          const { error: lotErr } = await supabase.from('lots').insert({
+            id: newLot.id,
+            fpo_id: newLot.fpo_id,
+            crop: newLot.crop,
+            total_quantity_kg: newLot.total_quantity_kg,
+            quality: newLot.quality,
+            status: newLot.status,
+            created_at: newLot.created_at,
+          });
+          if (lotErr) throw lotErr;
+
+          const { error: junctionErr } = await supabase.from('lot_listings').insert(
+            newLotListings.map((ll) => ({
+              id: ll.id,
+              lot_id: ll.lot_id,
+              farmer_listing_id: ll.farmer_listing_id,
+              quantity_kg: ll.quantity_kg,
+              created_at: ll.created_at,
+            }))
+          );
+          if (junctionErr) throw junctionErr;
+
+          const { error: flErr } = await supabase
+            .from('farmer_listings')
+            .update({ status: 'lotted' })
+            .in('id', listingIds);
+          if (flErr) throw flErr;
+
+          console.log('[Supabase] Persisted lot and junctions:', newLot.id);
+        } catch (err: any) {
+          console.warn('[Supabase] Lot persistence error (using local fallback):', err?.message || err);
+        }
+      })();
+    }
+
     return newLot;
   }
 
@@ -257,7 +373,7 @@ export class AgriConnectStore {
     if (!buyer) throw new Error('No buyer logged in');
 
     const newDemand: BuyerDemand = {
-      id: `d${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: generateUUID(),
       buyer_id: buyer.id,
       crop: data.crop,
       required_quantity_kg: Number(data.required_quantity_kg),
@@ -296,7 +412,7 @@ export class AgriConnectStore {
     );
 
     const newMatch: Match = {
-      id: `m-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: generateUUID(),
       lot_id: lot.id,
       buyer_demand_id: demand.id,
       match_score: matchCalculation.totalScore,
@@ -389,7 +505,7 @@ export class AgriConnectStore {
     );
 
     const newRoute: PickupRoute = {
-      id: `r-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: generateUUID(),
       logistics_id: logisticsPartnerId,
       match_id: match.id,
       fpo_id: fpo.id,
@@ -404,7 +520,7 @@ export class AgriConnectStore {
 
     const newStops: RouteStop[] = routeOptimization.orderedStops.map(
       (stop, idx) => ({
-        id: `stop-${Date.now()}-${idx}`,
+        id: generateUUID(),
         pickup_route_id: newRoute.id,
         farmer_id: stop.id,
         stop_sequence: idx + 1,
@@ -494,7 +610,7 @@ export class AgriConnectStore {
       farmerGrossTotal - fpoCommissionTotal - platformFeeTotal;
 
     const newSettlement: Settlement = {
-      id: `set-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: generateUUID(),
       match_id: match.id,
       fpo_id: route.fpo_id,
       buyer_value: buyerValue,
@@ -535,7 +651,7 @@ export class AgriConnectStore {
           : 0;
 
       return {
-        id: `setline-${Date.now()}-${ll.id}`,
+        id: generateUUID(),
         settlement_id: newSettlement.id,
         farmer_id: farmerId,
         farmer_listing_id: ll.farmer_listing_id,
@@ -580,6 +696,13 @@ export class AgriConnectStore {
       }
     }
     this.notify();
+
+    // Also call server-side reset if Supabase configured
+    if (isSupabaseConfigured) {
+      fetch('/api/reset-demo', { method: 'POST' }).catch((e) =>
+        console.warn('Supabase reset API error:', e)
+      );
+    }
   }
 }
 
