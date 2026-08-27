@@ -137,6 +137,26 @@ export default function Navbar() {
                 Buyer
               </Link>
               <Link
+                href="/matching"
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  pathname.startsWith('/matching')
+                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                Matching
+              </Link>
+              <Link
+                href="/price-prediction"
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  pathname.startsWith('/price-prediction')
+                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                Price AI
+              </Link>
+              <Link
                 href="/logistics"
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   pathname.startsWith('/logistics')
