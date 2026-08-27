@@ -34,21 +34,6 @@ export function calculateTransportationCost(distanceKm: number, numberOfStops: n
   return Math.round(300 + distanceKm * 13 + numberOfStops * 50);
 }
 
-export interface MatchScoreInput {
-  lotCrop?: string;
-  demandCrop?: string;
-  lotQuantityKg: number;
-  demandedQuantityKg: number;
-  lotQuality: string;
-  minDemandedQuality: string;
-  lotExpectedAvgPrice: number;
-  buyerMaxPrice: number;
-  distanceKm?: number;
-  daysUntilDelivery?: number;
-  lotReadyDate?: string;
-  deliveryDate?: string;
-}
-
 export function calculateMatchScore(
   lotQuantityKg: number,
   demandedQuantityKg: number,
@@ -72,9 +57,10 @@ export function calculateMatchScore(
   const distanceFit = distanceKm < 50 ? 20 : distanceKm < 100 ? 17 : distanceKm < 200 ? 12 : distanceKm < 300 ? 7 : 3;
   const feasibilityFit = daysUntilDelivery >= 2 ? 20 : daysUntilDelivery >= 1 ? 15 : daysUntilDelivery === 0 ? 8 : 0;
   const cropScore = cropFit ? 20 : 0;
-  const totalScore = cropFit ? Math.min(100, cropScore * 0.2 + quantityFit * 0.2 + qualityFit * 0.2 + priceFit * 0.2 + distanceFit * 0.1 + feasibilityFit * 0.1) : 0;
+  const weightedScore = cropScore * 0.2 + quantityFit * 0.2 + qualityFit * 0.2 + priceFit * 0.2 + distanceFit * 0.1 + feasibilityFit * 0.1;
+  const totalScore = cropFit ? Math.round(weightedScore * 5) : 0;
   return {
-    totalScore: Math.round(totalScore),
+    totalScore: Math.min(100, totalScore),
     breakdown: { cropFit: cropScore, quantityFit, qualityFit, priceFit, distanceFit, feasibilityFit },
     criteriaMet: { cropMet: cropFit, quantityMet: quantityFit >= 15, qualityMet: qualityFit >= 20, priceMet: priceFit >= 20, distanceMet: distanceFit >= 12, feasibilityMet: feasibilityFit >= 15 },
   };
