@@ -1,294 +1,88 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  Mic,
-  Package,
-  Building2,
-  Store,
-  Map,
-  Truck,
-  Coins,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  Users,
-  TrendingUp,
-  ShieldCheck,
-  RotateCcw,
-} from 'lucide-react';
+import { ArrowRight, BarChart3, Building2, CheckCircle2, Coins, Leaf, Map, Mic, Package, Sparkles, Store, Truck, TrendingUp, Users } from 'lucide-react';
 import { store } from '@/lib/store';
 import { SEEDED_USERS } from '@/lib/seedData';
 
 export default function LandingPage() {
   const router = useRouter();
-  const [stats, setStats] = useState({
-    farmersCount: 6,
-    totalProduceKg: 10000,
-    lotsCount: 0,
-    matchesCount: 0,
-  });
+  const [stats, setStats] = useState({ farmers: 6, produce: 10000, lots: 0, matches: 0 });
 
   useEffect(() => {
-    const updateStats = () => {
+    const update = () => {
       const state = store.getState();
-      const totalKg = state.farmerListings.reduce((s, l) => s + l.quantity_kg, 0);
       setStats({
-        farmersCount: state.users.filter((u) => u.role === 'farmer').length,
-        totalProduceKg: totalKg,
-        lotsCount: state.lots.length,
-        matchesCount: state.matches.length,
+        farmers: state.users.filter((u) => u.role === 'farmer').length,
+        produce: state.farmerListings.reduce((sum, l) => sum + l.quantity_kg, 0),
+        lots: state.lots.length,
+        matches: state.matches.length,
       });
     };
-    updateStats();
-    return store.subscribe(updateStats);
+    update();
+    return store.subscribe(update);
   }, []);
 
-  const handleQuickLogin = (role: string, index = 0) => {
-    const user = SEEDED_USERS.filter((u) => u.role === role)[index];
-    if (user) {
-      store.loginAs(user.id);
-      if (role === 'farmer') router.push('/farmer');
-      else if (role === 'fpo_manager') router.push('/fpo');
-      else if (role === 'buyer') router.push('/buyer');
-      else if (role === 'logistics') router.push('/logistics');
-    }
+  const login = (role: string) => {
+    const user = SEEDED_USERS.find((u) => u.role === role);
+    if (!user) return;
+    store.loginAs(user.id);
+    router.push(role === 'farmer' ? '/farmer' : role === 'fpo_manager' ? '/fpo' : role === 'buyer' ? '/buyer' : '/logistics');
   };
 
-  const steps = [
-    { icon: Mic, label: 'SPEAK', desc: 'Voice produce listing in Tamil / English' },
-    { icon: Package, label: 'LIST', desc: 'Normalized strictly in kg with quality grade' },
-    { icon: Building2, label: 'AGGREGATE', desc: 'FPO creates buyer-ready lots from farmers' },
-    { icon: Store, label: 'MATCH', desc: 'Intelligent scoring (0-100) with buyer demands' },
-    { icon: Map, label: 'MAP', desc: 'Interactive geographic route visualization' },
-    { icon: Truck, label: 'TRANSPORT', desc: 'Optimized pickups & transparent dispatch' },
-    { icon: Coins, label: 'SETTLE', desc: 'Automated payment with transparent charges' },
+  const roles = [
+    { role: 'farmer', title: 'Farmer', desc: 'List produce by voice or form', icon: Mic, tone: 'bg-emerald-600' },
+    { role: 'fpo_manager', title: 'FPO', desc: 'Aggregate and manage lots', icon: Building2, tone: 'bg-slate-900' },
+    { role: 'buyer', title: 'Buyer', desc: 'Find supply and create demand', icon: Store, tone: 'bg-blue-600' },
+    { role: 'logistics', title: 'Logistics', desc: 'Manage pickup and delivery', icon: Truck, tone: 'bg-amber-600' },
   ];
 
   return (
-    <div className="space-y-12 pb-12">
-      {/* Hero Section */}
-      <section className="relative text-center py-10 sm:py-16 overflow-hidden rounded-3xl bg-gradient-to-b from-emerald-950 via-slate-900 to-slate-950 text-white p-6 sm:p-12 shadow-2xl border border-slate-800">
-        <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
-
-        <div className="relative z-10 max-w-3xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" /> Smart India Hackathon Prototype
+    <div className="space-y-10 pb-10">
+      <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-10 text-white shadow-xl sm:px-10 lg:px-14 lg:py-14">
+        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" />
+        <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-lime-400/10 blur-3xl" />
+        <div className="relative grid gap-10 lg:grid-cols-[1.15fr_.85fr] lg:items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[.16em] text-emerald-300">
+              <Sparkles className="h-3.5 w-3.5" /> Smart agricultural marketplace
+            </div>
+            <div className="space-y-3">
+              <h1 className="max-w-3xl text-4xl font-black tracking-tight sm:text-6xl">From farm gate to buyer, <span className="text-emerald-400">connected.</span></h1>
+              <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">AgriConnect connects farmers, FPOs, buyers and logistics partners with transparent pricing, intelligent matching and a simple workflow.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => login('farmer')} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-emerald-950/30 hover:bg-emerald-400">Start as Farmer <ArrowRight className="h-4 w-4" /></button>
+              <Link href="/price-prediction" className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"><BarChart3 className="h-4 w-4" /> Explore Price AI</Link>
+            </div>
           </div>
-
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
-            AgriConnect <span className="text-emerald-400">FPO</span>
-          </h1>
-
-          <p className="text-xl sm:text-2xl font-medium text-slate-200">
-            &quot;Speak. Aggregate. Sell. Know What You Earn.&quot;
-          </p>
-
-          <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-            A transparent agricultural supply chain connecting smallholder farmers, FPO collectives, wholesale buyers, and logistics partners with zero hidden fees.
-          </p>
-
-          {/* Quick Role Access Buttons */}
-          <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
-            <button
-              onClick={() => handleQuickLogin('farmer', 0)}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-emerald-600/90 hover:bg-emerald-500 border border-emerald-400/40 text-white font-bold transition-all shadow-lg hover:scale-105"
-            >
-              <Mic className="w-5 h-5 mb-1" />
-              <span className="text-sm">Farmer Login</span>
-              <span className="text-[10px] text-emerald-200 font-normal">Farmer A</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickLogin('fpo_manager', 0)}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-amber-600/90 hover:bg-amber-500 border border-amber-400/40 text-white font-bold transition-all shadow-lg hover:scale-105"
-            >
-              <Building2 className="w-5 h-5 mb-1" />
-              <span className="text-sm">FPO Manager</span>
-              <span className="text-[10px] text-amber-200 font-normal">TNFC-001</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickLogin('buyer', 0)}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-blue-600/90 hover:bg-blue-500 border border-blue-400/40 text-white font-bold transition-all shadow-lg hover:scale-105"
-            >
-              <Store className="w-5 h-5 mb-1" />
-              <span className="text-sm">Buyer Login</span>
-              <span className="text-[10px] text-blue-200 font-normal">ABC Fresh</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickLogin('logistics', 0)}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-purple-600/90 hover:bg-purple-500 border border-purple-400/40 text-white font-bold transition-all shadow-lg hover:scale-105"
-            >
-              <Truck className="w-5 h-5 mb-1" />
-              <span className="text-sm">Logistics</span>
-              <span className="text-[10px] text-purple-200 font-normal">Quick Transport</span>
-            </button>
+          <div className="rounded-3xl border border-white/10 bg-white/[.06] p-5 backdrop-blur-sm">
+            <div className="mb-4 flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-widest text-slate-400">Live marketplace</span><span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Active</span></div>
+            <div className="grid grid-cols-2 gap-3">
+              {[['Farmers', stats.farmers, Users], ['Produce', `${stats.produce.toLocaleString()} kg`, Package], ['Lots', stats.lots, Building2], ['Matches', stats.matches, TrendingUp]].map(([label, value, Icon]) => {
+                const I = Icon as React.ElementType;
+                return <div key={String(label)} className="rounded-2xl bg-white/[.07] p-4"><I className="mb-3 h-5 w-5 text-emerald-300" /><div className="text-2xl font-black">{value}</div><div className="mt-1 text-xs text-slate-400">{label}</div></div>;
+              })}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Visual Story Banner */}
-      <section className="space-y-4">
-        <div className="text-center">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-emerald-700">
-            End-to-End Operational Pipeline
-          </h2>
-          <p className="text-xl font-extrabold text-slate-900 mt-1">
-            How AgriConnect Solves Agricultural Disconnect
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {steps.map((s, idx) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={idx}
-                className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col items-center text-center space-y-2 hover:border-emerald-400 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-black tracking-wide text-slate-900">
-                  {idx + 1}. {s.label}
-                </div>
-                <p className="text-[11px] text-slate-500 leading-tight">
-                  {s.desc}
-                </p>
-              </div>
-            );
-          })}
+      <section className="space-y-5">
+        <div><p className="text-xs font-black uppercase tracking-[.18em] text-emerald-700">Choose your workspace</p><h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">One platform. Four roles.</h2></div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {roles.map(({ role, title, desc, icon: Icon, tone }) => <button key={role} onClick={() => login(role)} className="group rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl text-white ${tone}`}><Icon className="h-5 w-5" /></div><h3 className="text-lg font-black text-slate-900">{title}</h3><p className="mt-1 min-h-10 text-sm leading-5 text-slate-500">{desc}</p><span className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-emerald-700">Open workspace <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span></button>)}
         </div>
       </section>
 
-      {/* Live System Stats */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium block">
-              Registered Farmers
-            </span>
-            <span className="text-2xl font-black text-slate-900">
-              {stats.farmersCount} Farmers
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <Package className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium block">
-              Available Produce
-            </span>
-            <span className="text-2xl font-black text-emerald-600">
-              {stats.totalProduceKg.toLocaleString()} kg
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium block">
-              Active Lots
-            </span>
-            <span className="text-2xl font-black text-slate-900">
-              {stats.lotsCount} Lots
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium block">
-              Buyer Matches
-            </span>
-            <span className="text-2xl font-black text-purple-700">
-              {stats.matchesCount} Matched
-            </span>
-          </div>
-        </div>
+      <section className="grid gap-4 lg:grid-cols-3">
+        {[{ icon: Mic, title: 'Speak', text: 'Create a produce listing naturally, including crop, quantity and readiness.' }, { icon: TrendingUp, title: 'Know your price', text: 'Use market context and prediction intelligence before deciding when to sell.' }, { icon: Coins, title: 'Know what you earn', text: 'Follow matching, logistics and settlement with transparent calculations.' }].map(({ icon: Icon, title, text }) => <div key={title} className="rounded-3xl border border-slate-200 bg-white p-6"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700"><Icon className="h-5 w-5" /></div><h3 className="mt-5 text-xl font-black text-slate-900">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{text}</p></div>)}
       </section>
 
-      {/* SIH 11-Step Hackathon Walkthrough Guide */}
-      <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-              Judges & Evaluators Walkthrough
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
-              11-Step Zero-Edit Demonstration
-            </h3>
-          </div>
-          <button
-            onClick={() => {
-              store.resetDemo();
-              alert('Database reset to fresh state with 6 farmers ready!');
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset Initial Demo State
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-emerald-700 block">Step 1: Farmer Produce Listings</span>
-            <p className="text-slate-600">
-              Login as Farmer A-F. Use 🎤 voice recognition (&quot;I have 2000 kg tomato ready tomorrow&quot;) or manual form to list produce in kilograms.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-amber-700 block">Step 2 & 3: FPO Verification & Aggregation</span>
-            <p className="text-slate-600">
-              Login as FPO Manager (TNFC-001). Review 6 farmers&apos; 10,000 kg Grade A produce and aggregate them into a single buyer-ready lot.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-blue-700 block">Step 4 & 5: Mandi Context & Matchmaking</span>
-            <p className="text-slate-600">
-              Check 14-day Mandi price chart (₹25.50/kg). Match lot with ABC Fresh demand (10,000 kg @ ₹25/kg) with automated 91/100 score.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-purple-700 block">Step 6 & 7: Map Route & Dispatch</span>
-            <p className="text-slate-600">
-              Inspect interactive map with 6 stops (~50 km) and transparent ₹1,210 transportation cost calculation. Assign to Quick Transport.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-indigo-700 block">Step 8 & 9: Logistics Fulfillment & Settlement</span>
-            <p className="text-slate-600">
-              Login as Logistics partner. Mark farmer stops picked up sequentially. Mark delivered to automatically trigger transparent settlement ledger.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-emerald-800 block">Step 10 & 11: Earnings & FPO Profit</span>
-            <p className="text-slate-600">
-              Login as Farmer to view exact net realization and % retained. Login as FPO to inspect transparent 4% commission and operating margins.
-            </p>
-          </div>
-        </div>
+      <section className="rounded-[2rem] border border-emerald-100 bg-emerald-50/70 p-6 sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center"><div><div className="flex items-center gap-2 text-sm font-black text-emerald-800"><CheckCircle2 className="h-5 w-5" /> End-to-end supply chain</div><h2 className="mt-2 text-2xl font-black text-slate-950">List → Aggregate → Match → Transport → Settle</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Every stage stays connected so farmers and partners can see what happens to a lot from listing through final settlement.</p></div><Link href="/matching" className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800">View matching <ArrowRight className="h-4 w-4" /></Link></div>
       </section>
     </div>
   );
