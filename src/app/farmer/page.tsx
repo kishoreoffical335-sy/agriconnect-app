@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { store } from '@/lib/store';
 import { User, FarmerListing, SettlementLine } from '@/lib/types';
 import VoiceListingModal from '@/components/VoiceListingModal';
+import { generateFarmerRecommendation, AgriRecommendation } from '@/lib/recommendationEngine';
 import {
   Mic,
   PlusCircle,
@@ -15,17 +16,23 @@ import {
   Clock,
   Truck,
   TrendingUp,
+  TrendingDown,
+  Minus,
   Building2,
   Calendar,
   AlertCircle,
   ChevronRight,
   Info,
+  MapPin,
+  Store,
+  IndianRupee,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function FarmerPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'produce' | 'earnings'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'produce' | 'intelligence' | 'earnings'>('home');
   const [myListings, setMyListings] = useState<FarmerListing[]>([]);
   const [mySettlementLines, setMySettlementLines] = useState<SettlementLine[]>([]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
@@ -43,6 +50,11 @@ export default function FarmerPage() {
   const [manualPrice, setManualPrice] = useState('24.00');
   const [showBreakdownModal, setShowBreakdownModal] = useState(false);
 
+  // Intelligence Target Crop
+  const [intelCrop, setIntelCrop] = useState('Tomato');
+
+  const [state, setState] = useState(store.getState());
+
   useEffect(() => {
     const update = () => {
       const user = store.getCurrentUser();
@@ -56,18 +68,48 @@ export default function FarmerPage() {
         setCurrentUser(user);
       }
 
+      const st = store.getState();
+      setState(st);
+
       if (user) {
-        const state = store.getState();
-        const listings = state.farmerListings.filter((l) => l.farmer_id === user.id);
-        const setLines = state.settlementLines.filter((sl) => sl.farmer_id === user.id);
+        const listings = st.farmerListings.filter((l) => l.farmer_id === user.id);
+        const setLines = st.settlementLines.filter((sl) => sl.farmer_id === user.id);
         setMyListings(listings);
         setMySettlementLines(setLines);
+        if (listings.length > 0) {
+          setIntelCrop(listings[0].crop);
+        }
       }
     };
 
     update();
     return store.subscribe(update);
   }, []);
+
+  // Compute recommendation for current farmer & crop
+  const farmerRecommendation = useMemo<AgriRecommendation | null>(() => {
+    if (!currentUser) return null;
+    const listingForCrop = myListings.find((l) => l.crop.toLowerCase() === intelCrop.toLowerCase());
+    return generateFarmerRecommendation(
+      {
+        crop: intelCrop,
+        quantityKg: listingForCrop ? listingForCrop.quantity_kg : 2000,
+        quality: listingForCrop ? listingForCrop.quality : 'Grade A',
+        village: currentUser.village,
+        district: currentUser.district,
+        latitude: currentUser.latitude,
+        longitude: currentUser.longitude,
+        readyDate: listingForCrop?.ready_date,
+        expectedPricePerKg: listingForCrop?.expected_price_per_kg || 24,
+      },
+      {
+        buyerDemands: state.buyerDemands,
+        mandiPrices: state.mandiPrices,
+        users: state.users,
+        fpos: state.fpos,
+      }
+    );
+  }, [currentUser, intelCrop, myListings, state.buyerDemands, state.mandiPrices, state.users, state.fpos]);
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +196,13 @@ export default function FarmerPage() {
   const avgRetention =
     totalGross > 0 ? Math.round((totalNet / totalGross) * 1000) / 10 : 93.3;
 
+  const TrendIcon =
+    farmerRecommendation?.priceForecast.trend === 'Rising'
+      ? TrendingUp
+      : farmerRecommendation?.priceForecast.trend === 'Falling'
+      ? TrendingDown
+      : Minus;
+
   return (
     <div className="space-y-6">
       {/* Top Banner Navigation */}
@@ -171,7 +220,7 @@ export default function FarmerPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-xl self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-1.5 rounded-xl self-start sm:self-auto">
           <button
             onClick={() => setActiveTab('home')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -191,6 +240,16 @@ export default function FarmerPage() {
             }`}
           >
             📦 My Produce ({myListings.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('intelligence')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'intelligence'
+                ? 'bg-white text-emerald-800 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            💡 Market Intelligence
           </button>
           <button
             onClick={() => setActiveTab('earnings')}
@@ -238,9 +297,81 @@ export default function FarmerPage() {
                   <PlusCircle className="w-5 h-5" />
                   <span>ENTER MANUALLY</span>
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('intelligence')}
+                  className="flex items-center gap-2 px-4 py-3.5 bg-emerald-700/60 hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl transition-colors"
+                >
+                  <Sparkles className="w-4 h-4 text-emerald-300" />
+                  <span>VIEW PRICE & DEMAND ADVICE</span>
+                </button>
               </div>
             </div>
           </div>
+
+          {/* AI Decision Snapshot Widget */}
+          {farmerRecommendation && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    Today&apos;s Price & Demand Advisory ({farmerRecommendation.crop})
+                  </h3>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                  Recommendation: {farmerRecommendation.action}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100">
+                  <span className="text-[10px] text-emerald-700 font-bold uppercase">Expected Price</span>
+                  <div className="text-xl font-black text-emerald-900 mt-0.5">
+                    ₹{farmerRecommendation.priceForecast.predictedPrice.toFixed(2)}/kg
+                  </div>
+                  <span className="text-[10px] text-slate-500">
+                    Range: ₹{farmerRecommendation.priceForecast.minPrice}–₹{farmerRecommendation.priceForecast.maxPrice}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Price Trend</span>
+                  <div className="text-sm font-black text-slate-900 mt-1 flex items-center gap-1">
+                    <TrendIcon className="w-4 h-4 text-emerald-600" />
+                    <span>{farmerRecommendation.priceForecast.trend}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">
+                    {farmerRecommendation.priceForecast.confidence}% confidence
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Demand Velocity</span>
+                  <div className="text-sm font-black text-slate-900 mt-1">
+                    {farmerRecommendation.demandForecast.growthTrend}
+                  </div>
+                  <span className="text-[10px] text-slate-400">
+                    ~{farmerRecommendation.demandForecast.historicalAverageDailyKg.toLocaleString()} kg/day
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Preferred Market</span>
+                  <div className="text-xs font-bold text-slate-800 mt-1 truncate">
+                    {farmerRecommendation.preferredMarket.split('(')[0]}
+                  </div>
+                  <span className="text-[10px] text-emerald-600 font-semibold">
+                    {farmerRecommendation.matchingBuyers.length} buyers in area
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                💡 <span className="font-semibold text-slate-800">{farmerRecommendation.actionReason}</span>
+              </p>
+            </div>
+          )}
 
           {/* Manual Listing Form */}
           {showManualForm && (
@@ -478,7 +609,164 @@ export default function FarmerPage() {
         </div>
       )}
 
-      {/* TAB 3: MY EARNINGS (Payment Transparency Card) */}
+      {/* TAB 3: MARKET INTELLIGENCE & BUYER MATCHES */}
+      {activeTab === 'intelligence' && (
+        <div className="space-y-6">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div>
+                <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4" /> AgriConnect Combined Intelligence Engine
+                </div>
+                <h2 className="text-xl font-black text-slate-900 mt-1">
+                  Crop Pricing & Demand Guidance
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Transparent decision-support for smallholder farmers. Know the fair market price and buyer demand before dispatch.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Select Crop</label>
+                <select
+                  value={intelCrop}
+                  onChange={(e) => setIntelCrop(e.target.value)}
+                  className="px-3 py-2 border border-slate-300 rounded-xl font-semibold text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="Tomato">Tomato</option>
+                  <option value="Onion">Onion</option>
+                  <option value="Potato">Potato</option>
+                </select>
+              </div>
+            </div>
+
+            {farmerRecommendation && (
+              <div className="space-y-6">
+                {/* Recommendation Banner */}
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-900 to-slate-900 text-white shadow-md space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-bold rounded-full border border-emerald-500/40">
+                      🎯 Action Advice: {farmerRecommendation.action}
+                    </span>
+                    <span className="text-xs text-slate-300">
+                      Target Realization: ~89% of gross value
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg font-black text-white">
+                    {farmerRecommendation.actionReason}
+                  </h3>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
+                    <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                      <span className="text-slate-300 block text-[10px] uppercase font-bold">Expected Price</span>
+                      <span className="text-base font-black text-emerald-300">
+                        ₹{farmerRecommendation.priceForecast.predictedPrice.toFixed(2)}/kg
+                      </span>
+                    </div>
+                    <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                      <span className="text-slate-300 block text-[10px] uppercase font-bold">Price Range</span>
+                      <span className="text-base font-black text-white">
+                        ₹{farmerRecommendation.priceForecast.minPrice}–₹{farmerRecommendation.priceForecast.maxPrice}
+                      </span>
+                    </div>
+                    <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                      <span className="text-slate-300 block text-[10px] uppercase font-bold">Market Trend</span>
+                      <span className="text-base font-black text-white flex items-center gap-1">
+                        <TrendIcon className="w-4 h-4 text-emerald-400" />
+                        {farmerRecommendation.priceForecast.trend}
+                      </span>
+                    </div>
+                    <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                      <span className="text-slate-300 block text-[10px] uppercase font-bold">Demand Level</span>
+                      <span className="text-base font-black text-white">
+                        {farmerRecommendation.priceForecast.demandLevel}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Key Drivers */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      Key Market Factors
+                    </h4>
+                    <ul className="text-xs text-slate-700 space-y-1.5">
+                      {farmerRecommendation.keyDrivers.map((driver, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>{driver}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <Building2 className="w-4 h-4 text-emerald-600" />
+                      FPO Collective Advantage
+                    </h4>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      By selling through the <span className="font-bold text-slate-800">Tamil Nadu Farmers Collective</span>, your produce is aggregated with neighbouring farmers in your village, unlocking wholesale buyer contracts that pay ₹3-5/kg above unorganized local spot mandis.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Matching Buyers Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                      <Store className="w-4 h-4 text-blue-600" />
+                      Matching Buyer Demands ({farmerRecommendation.matchingBuyers.length})
+                    </h4>
+                    <span className="text-xs text-slate-500">
+                      Ranked by compatibility, distance, and ceiling price
+                    </span>
+                  </div>
+
+                  {farmerRecommendation.matchingBuyers.length === 0 ? (
+                    <div className="p-6 bg-slate-50 rounded-xl text-center text-xs text-slate-500">
+                      No active institutional buyer requests currently match this crop. FPO managers will aggregate your produce for next open auction cycle.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {farmerRecommendation.matchingBuyers.map((buyer) => (
+                        <div
+                          key={buyer.demandId}
+                          className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm space-y-2.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900 text-sm">
+                              {buyer.buyerName}
+                            </span>
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full">
+                              Match: {buyer.matchScore}/100
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-slate-600 space-y-1">
+                            <div>Location: <span className="font-medium text-slate-800">{buyer.buyerLocation}</span> ({buyer.distanceKm.toFixed(1)} km)</div>
+                            <div>Required Volume: <span className="font-bold text-blue-700">{buyer.requiredQuantityKg.toLocaleString()} kg</span></div>
+                            <div>Ceiling Price: <span className="font-bold text-emerald-700">₹{buyer.maxPricePerKg.toFixed(2)}/kg</span></div>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                            {buyer.reasons.join(' • ')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: MY EARNINGS (Payment Transparency Card) */}
       {activeTab === 'earnings' && (
         <div className="space-y-6">
           {/* Main Earnings Summary Card */}

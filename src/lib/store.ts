@@ -21,7 +21,7 @@ import {
   SEEDED_BUYER_DEMANDS,
   SEEDED_MANDI_PRICES,
 } from './seedData';
-import { optimizeRoute, calculateMatchScore } from './geoUtils';
+import { optimizeRoute, calculateMatchScore, calculateHaversineDistance } from './geoUtils';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const STORAGE_KEY = 'agriconnect_db_state_v1';
@@ -400,15 +400,43 @@ export class AgriConnectStore {
 
     if (!lot || !demand) throw new Error('Lot or Demand not found');
 
+    const fpo = this.state.fpos.find((f) => f.id === lot.fpo_id);
+    const buyer = this.state.users.find((u) => u.id === demand.buyer_id);
+
+    const distanceKm = fpo && buyer && buyer.latitude != null && buyer.longitude != null
+      ? calculateHaversineDistance(fpo.latitude, fpo.longitude, buyer.latitude, buyer.longitude)
+      : 48.5;
+
+    const daysUntilDelivery = Math.max(
+      0,
+      Math.ceil(
+        (new Date(`${demand.delivery_date}T00:00:00`).getTime() - new Date().getTime()) / 86400000
+      )
+    );
+
+    // Calculate average expected price of underlying farmer listings
+    const lotListings = this.state.lotListings.filter((ll) => ll.lot_id === lotId);
+    const listingMap = new Map(this.state.farmerListings.map((fl) => [fl.id, fl]));
+    const expectedPrices = lotListings
+      .map((ll) => listingMap.get(ll.farmer_listing_id)?.expected_price_per_kg)
+      .filter((p): p is number => typeof p === 'number' && p > 0);
+    const avgExpectedPrice = expectedPrices.length > 0
+      ? expectedPrices.reduce((a, b) => a + b, 0) / expectedPrices.length
+      : demand.maximum_price_per_kg;
+
+    const agreedPrice = Math.min(demand.maximum_price_per_kg, Math.max(avgExpectedPrice, 20));
+
     const matchCalculation = calculateMatchScore(
       lot.total_quantity_kg,
       demand.required_quantity_kg,
       lot.quality,
       demand.minimum_quality,
-      24, // avg expected
+      avgExpectedPrice,
       demand.maximum_price_per_kg,
-      50, // default avg distance
-      2   // days
+      distanceKm,
+      daysUntilDelivery,
+      lot.crop,
+      demand.crop
     );
 
     const newMatch: Match = {
@@ -417,7 +445,7 @@ export class AgriConnectStore {
       buyer_demand_id: demand.id,
       match_score: matchCalculation.totalScore,
       quantity_matched_kg: Math.min(lot.total_quantity_kg, demand.required_quantity_kg),
-      price_per_kg: demand.maximum_price_per_kg,
+      price_per_kg: Number(agreedPrice.toFixed(2)),
       status: 'confirmed',
       created_at: new Date().toISOString(),
     };
@@ -431,9 +459,7 @@ export class AgriConnectStore {
     );
 
     // Update farmer listings attached to this lot
-    const lotListingItemIds = this.state.lotListings
-      .filter((ll) => ll.lot_id === lotId)
-      .map((ll) => ll.farmer_listing_id);
+    const lotListingItemIds = lotListings.map((ll) => ll.farmer_listing_id);
 
     this.state.farmerListings = this.state.farmerListings.map((fl) =>
       lotListingItemIds.includes(fl.id)
