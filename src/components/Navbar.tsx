@@ -1,317 +1,54 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { store } from '@/lib/store';
 import { User, UserRole } from '@/lib/types';
-import {
-  Sprout,
-  Building2,
-  Store,
-  Truck,
-  RotateCcw,
-  UserCheck,
-  ChevronDown,
-  Sparkles,
-} from 'lucide-react';
+import { Sprout, Building2, Store, Truck, RotateCcw, UserCheck, ChevronDown, Menu, X, BarChart3, Handshake } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [mobile, setMobile] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
-    const update = () => {
-      setCurrentUser(store.getCurrentUser());
-      setAllUsers(store.getState().users);
-    };
+    const update = () => { setCurrentUser(store.getCurrentUser()); setAllUsers(store.getState().users); };
     update();
     return store.subscribe(update);
   }, []);
 
-  const handleSwitchUser = (user: User) => {
-    store.loginAs(user.id);
-    setIsDropdownOpen(false);
-    if (user.role === 'farmer') router.push('/farmer');
-    else if (user.role === 'fpo_manager') router.push('/fpo');
-    else if (user.role === 'buyer') router.push('/buyer');
-    else if (user.role === 'logistics') router.push('/logistics');
+  const goUser = (user: User) => {
+    store.loginAs(user.id); setOpen(false); setMobile(false);
+    router.push(user.role === 'farmer' ? '/farmer' : user.role === 'fpo_manager' ? '/fpo' : user.role === 'buyer' ? '/buyer' : '/logistics');
   };
 
-  const handleResetDemo = () => {
-    if (confirm('Reset AgriConnect to initial demo state (6 farmers, 2 FPOs, 2 buyers)?')) {
-      setIsResetting(true);
-      store.resetDemo();
-      setTimeout(() => {
-        setIsResetting(false);
-        router.push('/');
-      }, 400);
-    }
-  };
+  const badge = (role?: UserRole) => role === 'farmer' ? 'Farmer' : role === 'fpo_manager' ? 'FPO' : role === 'buyer' ? 'Buyer' : role === 'logistics' ? 'Logistics' : 'Guest';
+  const nav = [
+    ['/farmer', 'Farmer', Sprout], ['/fpo', 'FPO', Building2], ['/buyer', 'Buyer', Store], ['/matching', 'Matching', Handshake], ['/price-prediction', 'Price AI', BarChart3], ['/logistics', 'Logistics', Truck]
+  ] as const;
 
-  const getRoleBadge = (role?: UserRole) => {
-    switch (role) {
-      case 'farmer':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            <Sprout className="w-3.5 h-3.5 text-emerald-600" /> Farmer
-          </span>
-        );
-      case 'fpo_manager':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-            <Building2 className="w-3.5 h-3.5 text-amber-600" /> FPO Manager
-          </span>
-        );
-      case 'buyer':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
-            <Store className="w-3.5 h-3.5 text-blue-600" /> Buyer
-          </span>
-        );
-      case 'logistics':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300">
-            <Truck className="w-3.5 h-3.5 text-purple-600" /> Logistics
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
+  const reset = () => { if (!confirm('Reset AgriConnect demo data?')) return; setResetting(true); store.resetDemo(); setTimeout(() => { setResetting(false); router.push('/'); }, 300); };
 
-  return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Tagline */}
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center text-white font-bold shadow-md shadow-emerald-200 group-hover:scale-105 transition-transform">
-                <Sprout className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-xl font-black tracking-tight text-slate-900 flex items-center gap-1.5">
-                  AgriConnect <span className="text-emerald-600">FPO</span>
-                </span>
-                <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
-                  Speak. Aggregate. Sell. Know What You Earn.
-                </p>
-              </div>
-            </Link>
-
-            {/* Navigation links */}
-            <nav className="hidden md:flex items-center gap-1 ml-4 pl-4 border-l border-slate-200">
-              <Link
-                href="/farmer"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname.startsWith('/farmer')
-                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Farmer
-              </Link>
-              <Link
-                href="/fpo"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname.startsWith('/fpo')
-                    ? 'bg-amber-50 text-amber-700 font-semibold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                FPO Hub
-              </Link>
-              <Link
-                href="/buyer"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname.startsWith('/buyer')
-                    ? 'bg-blue-50 text-blue-700 font-semibold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Buyer
-              </Link>
-              <Link
-                href="/matching"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname.startsWith('/matching')
-                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Matching
-              </Link>
-              <Link
-                href="/price-prediction"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname.startsWith('/price-prediction')
-                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Price AI
-              </Link>
-              <Link
-                href="/logistics"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname.startsWith('/logistics')
-                    ? 'bg-purple-50 text-purple-700 font-semibold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Logistics
-              </Link>
-            </nav>
-          </div>
-
-          {/* Right Action Bar */}
-          <div className="flex items-center gap-3">
-            {/* Demo Fast Role Switcher */}
-            <div className="relative">
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-sm transition-colors shadow-sm"
-              >
-                <div className="flex items-center gap-1.5 text-left">
-                  <UserCheck className="w-4 h-4 text-slate-500" />
-                  <span className="font-medium text-slate-800 text-xs sm:text-sm max-w-[130px] truncate">
-                    {currentUser?.name || 'Select User'}
-                  </span>
-                </div>
-                {getRoleBadge(currentUser?.role)}
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              </button>
-
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                      ⚡ Quick Role Switcher
-                    </span>
-                    <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
-                      SIH Demo
-                    </span>
-                  </div>
-
-                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
-                    {/* Farmers */}
-                    <div className="p-1">
-                      <div className="px-2 py-1 text-[11px] font-semibold text-slate-400">
-                        👨🌾 Farmers
-                      </div>
-                      {allUsers
-                        .filter((u) => u.role === 'farmer')
-                        .map((user) => (
-                          <button
-                            key={user.id}
-                            onClick={() => handleSwitchUser(user)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
-                              currentUser?.id === user.id
-                                ? 'bg-emerald-50 text-emerald-900 font-semibold'
-                                : 'text-slate-700 hover:bg-slate-50'
-                            }`}
-                          >
-                            <span>{user.name}</span>
-                            <span className="text-[10px] text-slate-400">
-                              {user.village}
-                            </span>
-                          </button>
-                        ))}
-                    </div>
-
-                    {/* FPO Managers */}
-                    <div className="p-1">
-                      <div className="px-2 py-1 text-[11px] font-semibold text-slate-400">
-                        🏢 FPO Managers
-                      </div>
-                      {allUsers
-                        .filter((u) => u.role === 'fpo_manager')
-                        .map((user) => (
-                          <button
-                            key={user.id}
-                            onClick={() => handleSwitchUser(user)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
-                              currentUser?.id === user.id
-                                ? 'bg-amber-50 text-amber-900 font-semibold'
-                                : 'text-slate-700 hover:bg-slate-50'
-                            }`}
-                          >
-                            <span>{user.name}</span>
-                            <span className="text-[10px] text-slate-400">
-                              {user.village}
-                            </span>
-                          </button>
-                        ))}
-                    </div>
-
-                    {/* Buyers */}
-                    <div className="p-1">
-                      <div className="px-2 py-1 text-[11px] font-semibold text-slate-400">
-                        🏪 Buyers
-                      </div>
-                      {allUsers
-                        .filter((u) => u.role === 'buyer')
-                        .map((user) => (
-                          <button
-                            key={user.id}
-                            onClick={() => handleSwitchUser(user)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
-                              currentUser?.id === user.id
-                                ? 'bg-blue-50 text-blue-900 font-semibold'
-                                : 'text-slate-700 hover:bg-slate-50'
-                            }`}
-                          >
-                            <span>{user.name}</span>
-                          </button>
-                        ))}
-                    </div>
-
-                    {/* Logistics */}
-                    <div className="p-1">
-                      <div className="px-2 py-1 text-[11px] font-semibold text-slate-400">
-                        🚚 Logistics
-                      </div>
-                      {allUsers
-                        .filter((u) => u.role === 'logistics')
-                        .map((user) => (
-                          <button
-                            key={user.id}
-                            onClick={() => handleSwitchUser(user)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
-                              currentUser?.id === user.id
-                                ? 'bg-purple-50 text-purple-900 font-semibold'
-                                : 'text-slate-700 hover:bg-slate-50'
-                            }`}
-                          >
-                            <span>{user.name}</span>
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Reset Demo Button */}
-            <button
-              onClick={handleResetDemo}
-              disabled={isResetting}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors shadow-sm"
-              title="Reset all demo data to initial state"
-            >
-              <RotateCcw
-                className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`}
-              />
-              <span className="hidden sm:inline">Reset Demo</span>
-            </button>
-          </div>
+  return <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="flex h-[4.5rem] items-center justify-between gap-4">
+        <Link href="/" className="flex shrink-0 items-center gap-3" onClick={() => setMobile(false)}>
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200"><Sprout className="h-5 w-5" /></span>
+          <span><span className="block text-lg font-black tracking-tight text-slate-950">AgriConnect</span><span className="hidden text-[10px] font-bold uppercase tracking-[.12em] text-emerald-700 sm:block">Farm to market</span></span>
+        </Link>
+        <nav className="hidden items-center gap-1 lg:flex">{nav.map(([href, label, Icon]) => <Link key={href} href={href} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition ${pathname.startsWith(href) ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`}><Icon className="h-4 w-4" />{label}</Link>)}</nav>
+        <div className="flex items-center gap-2">
+          <div className="relative hidden sm:block"><button onClick={() => setOpen(!open)} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold shadow-sm hover:bg-slate-50"><UserCheck className="h-4 w-4 text-emerald-700" /><span className="max-w-28 truncate">{currentUser?.name || 'Select user'}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">{badge(currentUser?.role)}</span><ChevronDown className="h-3.5 w-3.5 text-slate-400" /></button>{open && <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">{allUsers.map(user => <button key={user.id} onClick={() => goUser(user)} className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-semibold hover:bg-emerald-50"><span>{user.name}</span><span className="text-slate-400">{badge(user.role)}</span></button>)}</div>}</div>
+          <button onClick={reset} disabled={resetting} className="hidden rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-50 sm:block" title="Reset demo"><RotateCcw className={`h-4 w-4 ${resetting ? 'animate-spin' : ''}`} /></button>
+          <button onClick={() => setMobile(!mobile)} className="rounded-xl border border-slate-200 bg-white p-2 lg:hidden">{mobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
         </div>
       </div>
-    </header>
-  );
+      {mobile && <div className="border-t border-slate-100 py-3 lg:hidden"><nav className="grid grid-cols-2 gap-2">{nav.map(([href, label, Icon]) => <Link key={href} href={href} onClick={() => setMobile(false)} className={`flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-bold ${pathname.startsWith(href) ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-50 text-slate-700'}`}><Icon className="h-4 w-4" />{label}</Link>)}</nav></div>}
+    </div>
+  </header>;
 }
