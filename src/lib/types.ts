@@ -173,3 +173,44 @@ export interface MandiPrice {
   source: string;
   created_at?: string;
 }
+
+// ==========================================
+// B3 SMART AGGREGATION & K-MEANS TYPES
+// ==========================================
+
+export interface KMeansClusterConfig {
+  k?: number;
+  maxRadiusKm?: number;
+  maxDateSpreadDays?: number;
+  maxIterations?: number;
+  weightedCentroid?: boolean;
+  allowedStatuses?: FarmerListingStatus[];
+  enforceStrictRadius?: boolean;
+}
+
+export interface ClusterCentroid {
+  latitude: number;
+  longitude: number;
+}
+
+export interface AggregationSuggestion {
+  clusterId: string;
+  listingIds: string[];
+  totalQuantityKg: number;
+  crop: string;
+  quality: string;
+  centroid: ClusterCentroid;
+  averageDistanceKm: number;
+  maxDistanceKm: number;
+  readinessScore: number;
+  earliestReadyDate: string;
+  latestReadyDate: string;
+  farmerCount: number;
+  estimatedFarmerCount: number;
+  listings: FarmerListing[];
+  isWithinMaxRadius: boolean;
+  suggestedLotName: string;
+  averageExpectedPricePerKg?: number;
+  minExpectedPricePerKg?: number;
+  maxExpectedPricePerKg?: number;
+}
