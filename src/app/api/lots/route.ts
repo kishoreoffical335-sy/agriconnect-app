@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseServerConfigured } from '@/lib/supabaseServer';
 import { supabase as supabaseAnon, isSupabaseConfigured } from '@/lib/supabaseClient';
-import { generateUUID } from '@/lib/store';
+import { generateUUID } from '@/lib/geoUtils';
 
 export async function GET(request: Request) {
   try {
