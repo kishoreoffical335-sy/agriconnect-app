@@ -1,15 +1,67 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { store } from '@/lib/store';
 import { rankLotsForDemand } from '@/lib/matchingEngine';
 
 export default function MatchingPage() {
-  const [selectedDemandId, setSelectedDemandId] = useState(store.getState().buyerDemands[0]?.id || '');
+  const [selectedDemandId, setSelectedDemandId] = useState('');
+  const [storeVersion, setStoreVersion] = useState(0);
+  const [isCreatingDemoLot, setIsCreatingDemoLot] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = store.subscribe(() => setStoreVersion((version) => version + 1));
+    return unsubscribe;
+  }, []);
+
   const state = store.getState();
   const demands = state.buyerDemands.filter((d) => d.status === 'open');
-  const demand = demands.find((d) => d.id === selectedDemandId) || demands[0];
-  const ranked = useMemo(() => demand ? rankLotsForDemand(demand, state.lots, state.lotListings, state.farmerListings, state.users, state.fpos, state.mandiPrices) : [], [demand, state.lots, state.lotListings, state.farmerListings, state.users, state.fpos, state.mandiPrices]);
+  const selectedDemand = demands.find((d) => d.id === selectedDemandId) || demands[0];
+  const demand = selectedDemand;
+
+  const ranked = useMemo(
+    () => demand
+      ? rankLotsForDemand(
+          demand,
+          state.lots,
+          state.lotListings,
+          state.farmerListings,
+          state.users,
+          state.fpos,
+          state.mandiPrices,
+        )
+      : [],
+    [demand, state.lots, state.lotListings, state.farmerListings, state.users, state.fpos, state.mandiPrices, storeVersion],
+  );
+
+  const createDemoLot = () => {
+    if (isCreatingDemoLot) return;
+    setIsCreatingDemoLot(true);
+
+    try {
+      const tomatoListings = state.farmerListings
+        .filter((listing) => listing.crop.toLowerCase() === 'tomato' && listing.status === 'listed')
+        .slice(0, 6)
+        .map((listing) => listing.id);
+
+      if (tomatoListings.length === 0) {
+        window.alert('No eligible demo farmer listings are available. Use Reset Demo or create farmer listings first.');
+        return;
+      }
+
+      const fpoId = state.fpos[0]?.id;
+      if (!fpoId) {
+        window.alert('No FPO is available for demo aggregation.');
+        return;
+      }
+
+      store.createLotFromListings(fpoId, tomatoListings);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Unable to create the demo lot.');
+    } finally {
+      setIsCreatingDemoLot(false);
+    }
+  };
 
   return (
     <main className="space-y-6">
@@ -18,14 +70,37 @@ export default function MatchingPage() {
         <h1 className="mt-1 text-2xl font-black text-slate-900">Buyer ↔ Lot Matching</h1>
         <p className="mt-1 text-sm text-slate-500">Rank verified lots using crop, quantity, quality, price, distance and delivery feasibility. The recommendation stays explainable.</p>
         {demands.length > 0 && (
-          <select value={demand?.id} onChange={(e) => setSelectedDemandId(e.target.value)} className="mt-5 w-full max-w-xl rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold">
-            {demands.map((item) => <option key={item.id} value={item.id}>{item.crop} · {item.required_quantity_kg.toLocaleString()} kg · max ₹{item.maximum_price_per_kg}/kg · {item.delivery_location}</option>)}
+          <select
+            value={demand?.id || ''}
+            onChange={(e) => setSelectedDemandId(e.target.value)}
+            className="mt-5 w-full max-w-xl rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold"
+          >
+            {demands.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.crop} · {item.required_quantity_kg.toLocaleString()} kg · max ₹{item.maximum_price_per_kg}/kg · {item.delivery_location}
+              </option>
+            ))}
           </select>
         )}
       </section>
 
       {ranked.length === 0 ? (
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">No eligible created lots are currently available for this demand. FPO aggregation must create an eligible lot first.</section>
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-950">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-bold">No created lot is ready for this demand</h2>
+              <p className="mt-1 text-amber-900">The buyer demand exists, but matching only considers FPO-created lots. Create the demo aggregation from the seeded farmer listings to test the full B4 flow.</p>
+            </div>
+            <button
+              type="button"
+              onClick={createDemoLot}
+              disabled={isCreatingDemoLot}
+              className="shrink-0 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isCreatingDemoLot ? 'Creating lot…' : 'Create demo FPO lot'}
+            </button>
+          </div>
+        </section>
       ) : ranked.map((item, index) => (
         <section key={item.lot.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
