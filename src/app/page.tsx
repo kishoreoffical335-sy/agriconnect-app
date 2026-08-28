@@ -1,295 +1,113 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  Mic,
-  Package,
-  Building2,
-  Store,
-  Map,
-  Truck,
-  Coins,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  Users,
-  TrendingUp,
-  ShieldCheck,
-  RotateCcw,
-} from 'lucide-react';
+import { ArrowRight, BarChart3, Building2, CheckCircle2, ChevronRight, Mic, Package, ShoppingCart, Sprout, Truck, WalletCards } from 'lucide-react';
 import { store } from '@/lib/store';
 import { SEEDED_USERS } from '@/lib/seedData';
+import { CROP_CATALOG, CROP_CATEGORIES } from '@/lib/cropCatalog';
+import { getLanguage, INDIAN_LANGUAGES, LanguageCode } from '@/lib/i18n';
+
+const crops = CROP_CATALOG.slice(0, 10);
 
 export default function LandingPage() {
   const router = useRouter();
-  const [stats, setStats] = useState({
-    farmersCount: 6,
-    totalProduceKg: 10000,
-    lotsCount: 0,
-    matchesCount: 0,
-  });
+  const [language, setLanguage] = useState<LanguageCode>('en-IN');
+  const [listening, setListening] = useState(false);
+  const [stats, setStats] = useState({ farmers: 0, produce: 0, lots: 0, matches: 0 });
 
   useEffect(() => {
-    const updateStats = () => {
-      const state = store.getState();
-      const totalKg = state.farmerListings.reduce((s, l) => s + l.quantity_kg, 0);
-      setStats({
-        farmersCount: state.users.filter((u) => u.role === 'farmer').length,
-        totalProduceKg: totalKg,
-        lotsCount: state.lots.length,
-        matchesCount: state.matches.length,
-      });
+    const saved = localStorage.getItem('agriconnect_language') as LanguageCode | null;
+    if (saved && INDIAN_LANGUAGES.some((l) => l.code === saved)) setLanguage(saved);
+    const update = () => {
+      const s = store.getState();
+      setStats({ farmers: s.users.filter((u) => u.role === 'farmer').length, produce: s.farmerListings.reduce((n, x) => n + x.quantity_kg, 0), lots: s.lots.length, matches: s.matches.length });
     };
-    updateStats();
-    return store.subscribe(updateStats);
+    update();
+    return store.subscribe(update);
   }, []);
 
-  const handleQuickLogin = (role: string, index = 0) => {
-    const user = SEEDED_USERS.filter((u) => u.role === role)[index];
-    if (user) {
-      store.loginAs(user.id);
-      if (role === 'farmer') router.push('/farmer');
-      else if (role === 'fpo_manager') router.push('/fpo');
-      else if (role === 'buyer') router.push('/buyer');
-      else if (role === 'logistics') router.push('/logistics');
-    }
+  const selectedLanguage = useMemo(() => getLanguage(language), [language]);
+
+  const setAppLanguage = (value: LanguageCode) => {
+    setLanguage(value);
+    localStorage.setItem('agriconnect_language', value);
+    document.documentElement.lang = value;
+    window.dispatchEvent(new CustomEvent('agriconnect-language-change', { detail: value }));
   };
 
-  const steps = [
-    { icon: Mic, label: 'SPEAK', desc: 'Voice produce listing in Tamil / English' },
-    { icon: Package, label: 'LIST', desc: 'Normalized strictly in kg with quality grade' },
-    { icon: Building2, label: 'AGGREGATE', desc: 'FPO creates buyer-ready lots from farmers' },
-    { icon: Store, label: 'MATCH', desc: 'Intelligent scoring (0-100) with buyer demands' },
-    { icon: Map, label: 'MAP', desc: 'Interactive geographic route visualization' },
-    { icon: Truck, label: 'TRANSPORT', desc: 'Optimized pickups & transparent dispatch' },
-    { icon: Coins, label: 'SETTLE', desc: 'Automated payment with transparent charges' },
-  ];
+  const voiceList = () => {
+    const Recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!Recognition) return alert('Voice listing works best in Chrome or Edge.');
+    const recognition = new Recognition();
+    recognition.lang = selectedLanguage.speechCode;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript || '';
+      localStorage.setItem('agriconnect_voice_draft', transcript);
+      router.push('/farmer?voice=1');
+    };
+    recognition.start();
+  };
+
+  const quickLogin = (role: string) => {
+    const user = SEEDED_USERS.find((u) => u.role === role);
+    if (!user) return;
+    store.loginAs(user.id);
+    router.push(role === 'farmer' ? '/farmer' : role === 'fpo_manager' ? '/fpo' : role === 'buyer' ? '/buyer' : '/logistics');
+  };
 
   return (
-    <div className="space-y-12 pb-12">
-      {/* Hero Section */}
-      <section className="relative text-center py-10 sm:py-16 overflow-hidden rounded-3xl bg-gradient-to-b from-emerald-950 via-slate-900 to-slate-950 text-white p-6 sm:p-12 shadow-2xl border border-slate-800">
-        <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
-
-        <div className="relative z-10 max-w-3xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" /> Smart India Hackathon Prototype
+    <div className="min-h-screen bg-[#f7fbf3]">
+      <section className="relative overflow-hidden border-b border-emerald-100 bg-white">
+        <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full bg-amber-200/35 blur-3xl" />
+        <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-emerald-200/35 blur-3xl" />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-8 lg:pt-16">
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-emerald-800"><Sprout className="h-4 w-4" /> Farmer-first marketplace</div>
+            <h1 className="max-w-3xl text-4xl font-black leading-[1.05] tracking-tight text-emerald-950 sm:text-6xl">Sell your harvest with <span className="text-emerald-600">clarity.</span></h1>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">AgriConnect connects farmers, FPOs and serious buyers. List by voice, aggregate fairly, match intelligently, move efficiently and see exactly what you earn.</p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button onClick={voiceList} className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-black text-white shadow-lg shadow-emerald-200 transition hover:-translate-y-0.5 ${listening ? 'bg-amber-500' : 'bg-emerald-800 hover:bg-emerald-700'}`}><Mic className="h-5 w-5" /> {listening ? 'Listening…' : 'Speak to list produce'}</button>
+              <Link href="/buyer" className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-5 py-3.5 text-sm font-black text-emerald-800 hover:bg-emerald-50">Explore marketplace <ArrowRight className="h-4 w-4" /></Link>
+            </div>
+            <div className="mt-7 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"><span>Use AgriConnect in</span><select value={language} onChange={(e) => setAppLanguage(e.target.value as LanguageCode)} className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-bold text-emerald-800 outline-none">{INDIAN_LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.nativeName} · {l.name}</option>)}</select><span>• voice + dashboard language</span></div>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
-            AgriConnect <span className="text-emerald-400">FPO</span>
-          </h1>
-
-          <p className="text-xl sm:text-2xl font-medium text-slate-200">
-            &quot;Speak. Aggregate. Sell. Know What You Earn.&quot;
-          </p>
-
-          <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-            A transparent agricultural supply chain connecting smallholder farmers, FPO collectives, wholesale buyers, and logistics partners with zero hidden fees.
-          </p>
-
-          {/* Quick Role Access Buttons */}
-          <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
-            <button
-              onClick={() => handleQuickLogin('farmer', 0)}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-emerald-600/90 hover:bg-emerald-500 border border-emerald-400/40 text-white font-bold transition-all shadow-lg hover:scale-105"
-            >
-              <Mic className="w-5 h-5 mb-1" />
-              <span className="text-sm">Farmer Login</span>
-              <span className="text-[10px] text-emerald-200 font-normal">Farmer A</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickLogin('fpo_manager', 0)}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-amber-600/90 hover:bg-amber-500 border border-amber-400/40 text-white font-bold transition-all shadow-lg hover:scale-105"
-            >
-              <Building2 className="w-5 h-5 mb-1" />
-              <span className="text-sm">FPO Manager</span>
-              <span className="text-[10px] text-amber-200 font-normal">TNFC-001</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickLogin('buyer', 0)}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-blue-600/90 hover:bg-blue-500 border border-blue-400/40 text-white font-bold transition-all shadow-lg hover:scale-105"
-            >
-              <Store className="w-5 h-5 mb-1" />
-              <span className="text-sm">Buyer Login</span>
-              <span className="text-[10px] text-blue-200 font-normal">ABC Fresh</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickLogin('logistics', 0)}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-purple-600/90 hover:bg-purple-500 border border-purple-400/40 text-white font-bold transition-all shadow-lg hover:scale-105"
-            >
-              <Truck className="w-5 h-5 mb-1" />
-              <span className="text-sm">Logistics</span>
-              <span className="text-[10px] text-purple-200 font-normal">Quick Transport</span>
-            </button>
+          <div className="relative rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-950 via-emerald-900 to-green-700 p-4 shadow-2xl shadow-emerald-200/50 sm:p-6">
+            <div className="rounded-[1.5rem] bg-white p-5 sm:p-6">
+              <div className="flex items-center justify-between"><div><p className="text-xs font-bold text-slate-500">TODAY'S FARMER HUB</p><h2 className="mt-1 text-2xl font-black text-emerald-950">Vanakkam, Ramesh 🌱</h2></div><button onClick={voiceList} className="rounded-2xl bg-amber-400 p-3 text-emerald-950"><Mic className="h-5 w-5" /></button></div>
+              <div className="mt-5 rounded-2xl bg-gradient-to-r from-emerald-700 to-green-500 p-5 text-white"><p className="text-sm font-bold">List your produce</p><p className="mt-1 text-xs text-emerald-50">Speak naturally in your selected language.</p><div className="mt-4 flex gap-2"><button onClick={voiceList} className="rounded-xl bg-amber-400 px-4 py-2 text-xs font-black text-emerald-950">🎙 Start voice listing</button><Link href="/farmer" className="rounded-xl bg-white/15 px-4 py-2 text-xs font-bold text-white">Open dashboard</Link></div></div>
+              <div className="mt-5 grid grid-cols-3 gap-2">{[['Tomato','2,000 kg','₹24'],['Onion','750 kg','₹20.1'],['Rice','1,500 kg','₹38']].map(([name, qty, price]) => <div key={name} className="rounded-xl border border-slate-100 p-3"><div className="text-xs font-bold text-slate-800">{name}</div><div className="mt-1 text-[11px] text-slate-500">{qty}</div><div className="mt-2 text-sm font-black text-emerald-700">{price}<span className="text-[9px] font-semibold">/kg</span></div></div>)}</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Visual Story Banner */}
-      <section className="space-y-4">
-        <div className="text-center">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-emerald-700">
-            End-to-End Operational Pipeline
-          </h2>
-          <p className="text-xl font-extrabold text-slate-900 mt-1">
-            How AgriConnect Solves Agricultural Disconnect
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {steps.map((s, idx) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={idx}
-                className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col items-center text-center space-y-2 hover:border-emerald-400 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-black tracking-wide text-slate-900">
-                  {idx + 1}. {s.label}
-                </div>
-                <p className="text-[11px] text-slate-500 leading-tight">
-                  {s.desc}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[['Farmers', stats.farmers, UsersIcon],['Produce', `${stats.produce.toLocaleString()} kg`, Package],['Lots', stats.lots, Building2],['Matches', stats.matches, BarChart3]].map(([label, value, Icon]: any) => <div key={label as string} className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm"><Icon className="h-5 w-5 text-emerald-600" /><div className="mt-3 text-2xl font-black text-emerald-950">{value}</div><div className="text-xs font-semibold text-slate-500">{label}</div></div>)}</div>
       </section>
 
-      {/* Live System Stats */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium block">
-              Registered Farmers
-            </span>
-            <span className="text-2xl font-black text-slate-900">
-              {stats.farmersCount} Farmers
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <Package className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium block">
-              Available Produce
-            </span>
-            <span className="text-2xl font-black text-emerald-600">
-              {stats.totalProduceKg.toLocaleString()} kg
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium block">
-              Active Lots
-            </span>
-            <span className="text-2xl font-black text-slate-900">
-              {stats.lotsCount} Lots
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium block">
-              Buyer Matches
-            </span>
-            <span className="text-2xl font-black text-purple-700">
-              {stats.matchesCount} Matched
-            </span>
-          </div>
-        </div>
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-emerald-700">Daily marketplace</p><h2 className="mt-1 text-2xl font-black text-emerald-950">Produce you can trade every day</h2></div><Link href="/buyer" className="hidden items-center gap-1 text-sm font-bold text-emerald-700 sm:flex">View all <ChevronRight className="h-4 w-4" /></Link></div>
+        <div className="mt-5 flex gap-2 overflow-x-auto pb-2">{CROP_CATEGORIES.map((cat) => <span key={cat.id} className="whitespace-nowrap rounded-full border border-emerald-100 bg-white px-4 py-2 text-xs font-bold text-slate-600">{cat.label}</span>)}</div>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{crops.map((crop) => <Link href="/buyer" key={crop.id} className="group rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-md"><div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-2xl">{crop.category === 'spices' ? '🌶️' : crop.category === 'rice' ? '🌾' : crop.category === 'wheat' || crop.category === 'grains' ? '🌾' : '🥬'}</div><div className="mt-3 text-sm font-black text-slate-900">{crop.name}</div><div className="mt-1 text-[11px] font-semibold capitalize text-slate-500">{crop.category}</div></Link>)}</div>
       </section>
 
-      {/* SIH 11-Step Hackathon Walkthrough Guide */}
-      <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-              Judges & Evaluators Walkthrough
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
-              11-Step Zero-Edit Demonstration
-            </h3>
-          </div>
-          <button
-            onClick={() => {
-              store.resetDemo();
-              alert('Database reset to fresh state with 6 farmers ready!');
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset Initial Demo State
-          </button>
-        </div>
+      <section className="border-y border-emerald-100 bg-white"><div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8"><div className="grid gap-5 lg:grid-cols-4">{[[Mic,'1','Speak','List in your own language'],[Package,'2','Aggregate','FPO verifies and builds buyer-ready lots'],[ShoppingCart,'3','Match','Smart scoring connects supply and demand'],[WalletCards,'4','Know your earnings','Transparent price, charges and settlement']].map(([Icon,n,title,desc]: any) => <div key={n} className="relative rounded-2xl border border-slate-100 bg-[#f8fcf5] p-5"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-800 text-white"><Icon className="h-5 w-5" /></div><span className="text-xs font-black text-amber-600">0{n}</span></div><h3 className="mt-4 font-black text-emerald-950">{title}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{desc}</p></div>)}</div></div></section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-emerald-700 block">Step 1: Farmer Produce Listings</span>
-            <p className="text-slate-600">
-              Login as Farmer A-F. Use 🎤 voice recognition (&quot;I have 2000 kg tomato ready tomorrow&quot;) or manual form to list produce in kilograms.
-            </p>
-          </div>
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8"><div className="rounded-[2rem] bg-emerald-950 p-7 text-white sm:p-10"><div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="text-xs font-black uppercase tracking-widest text-amber-300">Built for India</p><h2 className="mt-2 text-3xl font-black">One app. Farmer, FPO, buyer and logistics.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-emerald-100">The interface is designed as a working product—not a presentation page. Every role has a job to do, every transaction has a visible state, and every key action can be driven from the farmer experience.</p></div><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[['Farmer','/farmer'],['FPO','/fpo'],['Buyer','/buyer'],['Logistics','/logistics']].map(([label,href]) => <Link href={href} key={label} className="rounded-xl bg-white/10 px-4 py-3 text-center text-xs font-black hover:bg-white/20">{label}</Link>)}</div></div></div></section>
 
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-amber-700 block">Step 2 & 3: FPO Verification & Aggregation</span>
-            <p className="text-slate-600">
-              Login as FPO Manager (TNFC-001). Review 6 farmers&apos; 10,000 kg Grade A produce and aggregate them into a single buyer-ready lot.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-blue-700 block">Step 4 & 5: Mandi Context & Matchmaking</span>
-            <p className="text-slate-600">
-              Check 14-day Mandi price chart (₹25.50/kg). Match lot with ABC Fresh demand (10,000 kg @ ₹25/kg) with automated 91/100 score.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-purple-700 block">Step 6 & 7: Map Route & Dispatch</span>
-            <p className="text-slate-600">
-              Inspect interactive map with 6 stops (~50 km) and transparent ₹1,210 transportation cost calculation. Assign to Quick Transport.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-indigo-700 block">Step 8 & 9: Logistics Fulfillment & Settlement</span>
-            <p className="text-slate-600">
-              Login as Logistics partner. Mark farmer stops picked up sequentially. Mark delivered to automatically trigger transparent settlement ledger.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-            <span className="font-bold text-emerald-800 block">Step 10 & 11: Earnings & FPO Profit</span>
-            <p className="text-slate-600">
-              Login as Farmer to view exact net realization and % retained. Login as FPO to inspect transparent 4% commission and operating margins.
-            </p>
-          </div>
-        </div>
-      </section>
+      <footer className="border-t border-emerald-100 bg-white py-6"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8"><span className="font-black text-emerald-900">AgriConnect</span><span>Connect. Aggregate. Grow Together. • Language: {selectedLanguage.nativeName}</span></div></footer>
     </div>
   );
+}
+
+function UsersIcon(props: any) {
+  return <Sprout {...props} />;
 }
