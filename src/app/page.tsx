@@ -3,18 +3,35 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, BarChart3, Building2, CheckCircle2, ChevronRight, Mic, Package, ShoppingCart, Sprout, Truck, WalletCards } from 'lucide-react';
+import { ArrowRight, BarChart3, Building2, ChevronRight, Mic, Package, ShoppingCart, Sprout, WalletCards } from 'lucide-react';
 import { store } from '@/lib/store';
 import { SEEDED_USERS } from '@/lib/seedData';
-import { CROP_CATALOG, CROP_CATEGORIES } from '@/lib/cropCatalog';
+import { CROP_CATALOG, CROP_CATEGORIES, CropCategory } from '@/lib/cropCatalog';
 import { getLanguage, INDIAN_LANGUAGES, LanguageCode } from '@/lib/i18n';
 
-const crops = CROP_CATALOG.slice(0, 10);
+const PREVIEW_CROPS: Record<CropCategory, string[]> = {
+  vegetables: ['tomato','onion','potato','brinjal','okra','cabbage','cauliflower','carrot','beans','green-chilli'],
+  rice: ['rice'],
+  wheat: ['wheat'],
+  grains: ['maize','ragi','millet','tur-dal','chickpea'],
+  spices: ['black-pepper','turmeric','cumin','coriander','cardamom','clove','dry-chilli'],
+};
+
+function CropArtwork({ cropId, name }: { cropId: string; name: string }) {
+  return (
+    <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-emerald-50">
+      <svg viewBox="0 0 96 96" className="h-full w-full" role="img" aria-label={name}>
+        <use href={`/crops/sprite.svg#${cropId}`} />
+      </svg>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const router = useRouter();
   const [language, setLanguage] = useState<LanguageCode>('en-IN');
   const [listening, setListening] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<CropCategory>('vegetables');
   const [stats, setStats] = useState({ farmers: 0, produce: 0, lots: 0, matches: 0 });
 
   useEffect(() => {
@@ -29,6 +46,10 @@ export default function LandingPage() {
   }, []);
 
   const selectedLanguage = useMemo(() => getLanguage(language), [language]);
+  const visibleCrops = useMemo(() => {
+    const ids = PREVIEW_CROPS[selectedCategory];
+    return ids.map((id) => CROP_CATALOG.find((crop) => crop.id === id)).filter(Boolean).slice(0, 10) as typeof CROP_CATALOG;
+  }, [selectedCategory]);
 
   const setAppLanguage = (value: LanguageCode) => {
     setLanguage(value);
@@ -55,13 +76,6 @@ export default function LandingPage() {
     recognition.start();
   };
 
-  const quickLogin = (role: string) => {
-    const user = SEEDED_USERS.find((u) => u.role === role);
-    if (!user) return;
-    store.loginAs(user.id);
-    router.push(role === 'farmer' ? '/farmer' : role === 'fpo_manager' ? '/fpo' : role === 'buyer' ? '/buyer' : '/logistics');
-  };
-
   return (
     <div className="min-h-screen bg-[#f7fbf3]">
       <section className="relative overflow-hidden border-b border-emerald-100 bg-white">
@@ -78,7 +92,6 @@ export default function LandingPage() {
             </div>
             <div className="mt-7 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"><span>Use AgriConnect in</span><select value={language} onChange={(e) => setAppLanguage(e.target.value as LanguageCode)} className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-bold text-emerald-800 outline-none">{INDIAN_LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.nativeName} · {l.name}</option>)}</select><span>• voice + dashboard language</span></div>
           </div>
-
           <div className="relative rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-950 via-emerald-900 to-green-700 p-4 shadow-2xl shadow-emerald-200/50 sm:p-6">
             <div className="rounded-[1.5rem] bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between"><div><p className="text-xs font-bold text-slate-500">TODAY'S FARMER HUB</p><h2 className="mt-1 text-2xl font-black text-emerald-950">Vanakkam, Ramesh 🌱</h2></div><button onClick={voiceList} className="rounded-2xl bg-amber-400 p-3 text-emerald-950"><Mic className="h-5 w-5" /></button></div>
@@ -95,19 +108,24 @@ export default function LandingPage() {
 
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-emerald-700">Daily marketplace</p><h2 className="mt-1 text-2xl font-black text-emerald-950">Produce you can trade every day</h2></div><Link href="/buyer" className="hidden items-center gap-1 text-sm font-bold text-emerald-700 sm:flex">View all <ChevronRight className="h-4 w-4" /></Link></div>
-        <div className="mt-5 flex gap-2 overflow-x-auto pb-2">{CROP_CATEGORIES.map((cat) => <span key={cat.id} className="whitespace-nowrap rounded-full border border-emerald-100 bg-white px-4 py-2 text-xs font-bold text-slate-600">{cat.label}</span>)}</div>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{crops.map((crop) => <Link href="/buyer" key={crop.id} className="group rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-md"><div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-2xl">{crop.category === 'spices' ? '🌶️' : crop.category === 'rice' ? '🌾' : crop.category === 'wheat' || crop.category === 'grains' ? '🌾' : '🥬'}</div><div className="mt-3 text-sm font-black text-slate-900">{crop.name}</div><div className="mt-1 text-[11px] font-semibold capitalize text-slate-500">{crop.category}</div></Link>)}</div>
+        <div className="mt-5 flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Produce categories">
+          {CROP_CATEGORIES.map((cat) => <button key={cat.id} type="button" role="tab" aria-selected={selectedCategory === cat.id} onClick={() => setSelectedCategory(cat.id)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${selectedCategory === cat.id ? 'border-emerald-700 bg-emerald-800 text-white shadow-sm' : 'border-emerald-100 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'}`}>{cat.label}</button>)}
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {visibleCrops.map((crop) => <Link href={`/buyer?crop=${encodeURIComponent(crop.name)}`} key={crop.id} className="group rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-md">
+            <CropArtwork cropId={crop.id} name={crop.name} />
+            <div className="mt-3 text-sm font-black text-slate-900">{crop.name}</div>
+            <div className="mt-1 text-[11px] font-semibold capitalize text-slate-500">{crop.category}</div>
+            <div className="mt-3 text-[11px] font-bold text-emerald-700 opacity-0 transition group-hover:opacity-100">View marketplace →</div>
+          </Link>)}
+        </div>
       </section>
 
       <section className="border-y border-emerald-100 bg-white"><div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8"><div className="grid gap-5 lg:grid-cols-4">{[[Mic,'1','Speak','List in your own language'],[Package,'2','Aggregate','FPO verifies and builds buyer-ready lots'],[ShoppingCart,'3','Match','Smart scoring connects supply and demand'],[WalletCards,'4','Know your earnings','Transparent price, charges and settlement']].map(([Icon,n,title,desc]: any) => <div key={n} className="relative rounded-2xl border border-slate-100 bg-[#f8fcf5] p-5"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-800 text-white"><Icon className="h-5 w-5" /></div><span className="text-xs font-black text-amber-600">0{n}</span></div><h3 className="mt-4 font-black text-emerald-950">{title}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{desc}</p></div>)}</div></div></section>
-
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8"><div className="rounded-[2rem] bg-emerald-950 p-7 text-white sm:p-10"><div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="text-xs font-black uppercase tracking-widest text-amber-300">Built for India</p><h2 className="mt-2 text-3xl font-black">One app. Farmer, FPO, buyer and logistics.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-emerald-100">The interface is designed as a working product—not a presentation page. Every role has a job to do, every transaction has a visible state, and every key action can be driven from the farmer experience.</p></div><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[['Farmer','/farmer'],['FPO','/fpo'],['Buyer','/buyer'],['Logistics','/logistics']].map(([label,href]) => <Link href={href} key={label} className="rounded-xl bg-white/10 px-4 py-3 text-center text-xs font-black hover:bg-white/20">{label}</Link>)}</div></div></div></section>
-
       <footer className="border-t border-emerald-100 bg-white py-6"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8"><span className="font-black text-emerald-900">AgriConnect</span><span>Connect. Aggregate. Grow Together. • Language: {selectedLanguage.nativeName}</span></div></footer>
     </div>
   );
 }
 
-function UsersIcon(props: any) {
-  return <Sprout {...props} />;
-}
+function UsersIcon(props: any) { return <Sprout {...props} />; }
