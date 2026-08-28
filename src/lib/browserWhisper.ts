@@ -1,47 +1,62 @@
 'use client';
 
-let cachedPipeline: any = null;
-let loadingPromise: Promise<any> | null = null;
+let cachedPipelines: Record<string, any> = {};
+let loadingPromises: Record<string, Promise<any> | null> = {};
 
 /**
  * Browser-only multilingual Whisper fallback.
- * It is loaded from the official Transformers.js CDN so Safari/iOS does not
- * depend on the Web Speech service. The model is cached by the browser after
- * the first use.
+ * Safari can expose SpeechRecognition but return service-not-allowed, so the
+ * recorder path must remain a first-class transcription path.
  */
-async function loadPipeline() {
-  if (cachedPipeline) return cachedPipeline;
-  if (loadingPromise) return loadingPromise;
+const WHISPER_LANGUAGE: Record<string, string> = {
+  'en-IN': 'english',
+  'hi-IN': 'hindi',
+  'te-IN': 'telugu',
+  'ta-IN': 'tamil',
+};
 
-  loadingPromise = (async () => {
+async function loadPipeline(language: string) {
+  if (cachedPipelines[language]) return cachedPipelines[language];
+  if (loadingPromises[language]) return loadingPromises[language];
+
+  loadingPromises[language] = (async () => {
     const importer = new Function('url', 'return import(url)') as (url: string) => Promise<any>;
     const { pipeline } = await importer('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0');
-    const device = typeof navigator !== 'undefined' && 'gpu' in navigator ? 'webgpu' : 'wasm';
-    cachedPipeline = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny', {
-      device,
+
+    // WASM is deliberately preferred for Safari/iOS reliability. WebGPU can be
+    // enabled by callers later, but it is not required for this demo flow.
+    const options: Record<string, unknown> = {
+      device: 'wasm',
       dtype: 'q8',
-    });
-    return cachedPipeline;
+    };
+
+    cachedPipelines[language] = await pipeline(
+      'automatic-speech-recognition',
+      'Xenova/whisper-tiny',
+      options,
+    );
+    return cachedPipelines[language];
   })();
 
   try {
-    return await loadingPromise;
+    return await loadingPromises[language];
   } finally {
-    loadingPromise = null;
+    loadingPromises[language] = null;
   }
 }
 
-export async function transcribeWithWhisper(audio: Blob, language?: string): Promise<string> {
-  const pipe = await loadPipeline();
+export async function transcribeWithWhisper(audio: Blob, language = 'en-IN'): Promise<string> {
+  const whisperLanguage = WHISPER_LANGUAGE[language] || language.split('-')[0] || 'english';
+  const pipe = await loadPipeline(whisperLanguage);
   const url = URL.createObjectURL(audio);
   try {
-    const options: Record<string, unknown> = {
+    const result = await pipe(url, {
       task: 'transcribe',
-      chunk_length_s: 20,
-      stride_length_s: 4,
-    };
-    if (language) options.language = language;
-    const result = await pipe(url, options);
+      language: whisperLanguage,
+      chunk_length_s: 15,
+      stride_length_s: 3,
+      return_timestamps: false,
+    });
     return String(result?.text || '').trim();
   } finally {
     URL.revokeObjectURL(url);
@@ -49,5 +64,7 @@ export async function transcribeWithWhisper(audio: Blob, language?: string): Pro
 }
 
 export function whisperSupported(): boolean {
-  return typeof window !== 'undefined' && typeof window.MediaRecorder !== 'undefined' && typeof window.AudioContext !== 'undefined';
+  return typeof window !== 'undefined'
+    && typeof window.MediaRecorder !== 'undefined'
+    && typeof window.AudioContext !== 'undefined';
 }
