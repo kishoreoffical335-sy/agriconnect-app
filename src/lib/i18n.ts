@@ -3,60 +3,38 @@ export type LanguageCode =
   | 'kn-IN' | 'ml-IN' | 'pa-IN' | 'or-IN' | 'as-IN' | 'ur-IN' | 'mai-IN'
   | 'sat-IN' | 'ks-IN' | 'ne-IN' | 'kok-IN' | 'sd-IN' | 'doi-IN' | 'mni-IN' | 'br-IN';
 
-export interface LanguageOption {
-  code: LanguageCode;
-  name: string;
-  nativeName: string;
-  speechCode: string;
-}
+export interface LanguageOption { code: LanguageCode; name: string; nativeName: string; speechCode: string; }
 
 export const INDIAN_LANGUAGES: LanguageOption[] = [
-  { code: 'en-IN', name: 'English', nativeName: 'English', speechCode: 'en-IN' },
-  { code: 'hi-IN', name: 'Hindi', nativeName: 'हिन्दी', speechCode: 'hi-IN' },
-  { code: 'bn-IN', name: 'Bengali', nativeName: 'বাংলা', speechCode: 'bn-IN' },
-  { code: 'te-IN', name: 'Telugu', nativeName: 'తెలుగు', speechCode: 'te-IN' },
-  { code: 'mr-IN', name: 'Marathi', nativeName: 'मराठी', speechCode: 'mr-IN' },
-  { code: 'ta-IN', name: 'Tamil', nativeName: 'தமிழ்', speechCode: 'ta-IN' },
-  { code: 'gu-IN', name: 'Gujarati', nativeName: 'ગુજરાતી', speechCode: 'gu-IN' },
-  { code: 'kn-IN', name: 'Kannada', nativeName: 'ಕನ್ನಡ', speechCode: 'kn-IN' },
-  { code: 'ml-IN', name: 'Malayalam', nativeName: 'മലയാളം', speechCode: 'ml-IN' },
-  { code: 'pa-IN', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', speechCode: 'pa-IN' },
-  { code: 'or-IN', name: 'Odia', nativeName: 'ଓଡ଼ିଆ', speechCode: 'or-IN' },
-  { code: 'as-IN', name: 'Assamese', nativeName: 'অসমীয়া', speechCode: 'as-IN' },
-  { code: 'ur-IN', name: 'Urdu', nativeName: 'اردو', speechCode: 'ur-IN' },
-  { code: 'mai-IN', name: 'Maithili', nativeName: 'मैथिली', speechCode: 'hi-IN' },
-  { code: 'sat-IN', name: 'Santali', nativeName: 'ᱥᱟᱱᱛᱟᱲᱤ', speechCode: 'hi-IN' },
-  { code: 'ks-IN', name: 'Kashmiri', nativeName: 'कॉशुर', speechCode: 'hi-IN' },
-  { code: 'ne-IN', name: 'Nepali', nativeName: 'नेपाली', speechCode: 'ne-NP' },
-  { code: 'kok-IN', name: 'Konkani', nativeName: 'कोंकणी', speechCode: 'kok-IN' },
-  { code: 'sd-IN', name: 'Sindhi', nativeName: 'सिन्धी', speechCode: 'hi-IN' },
-  { code: 'doi-IN', name: 'Dogri', nativeName: 'डोगरी', speechCode: 'hi-IN' },
-  { code: 'mni-IN', name: 'Meitei', nativeName: 'মৈতৈলোন্', speechCode: 'hi-IN' },
-  { code: 'br-IN', name: 'Bodo', nativeName: 'बड़ो', speechCode: 'hi-IN' },
-];
+  ['en-IN','English','English','en-IN'],['hi-IN','Hindi','हिन्दी','hi-IN'],['bn-IN','Bengali','বাংলা','bn-IN'],['te-IN','Telugu','తెలుగు','te-IN'],['mr-IN','Marathi','मराठी','mr-IN'],['ta-IN','Tamil','தமிழ்','ta-IN'],['gu-IN','Gujarati','ગુજરાતી','gu-IN'],['kn-IN','Kannada','ಕನ್ನಡ','kn-IN'],['ml-IN','Malayalam','മലയാളം','ml-IN'],['pa-IN','Punjabi','ਪੰਜਾਬੀ','pa-IN'],['or-IN','Odia','ଓଡ଼ିଆ','or-IN'],['as-IN','Assamese','অসমীয়া','as-IN'],['ur-IN','Urdu','اردو','ur-IN'],['mai-IN','Maithili','मैथिली','hi-IN'],['sat-IN','Santali','ᱥᱟᱱᱛᱟᱲᱤ','hi-IN'],['ks-IN','Kashmiri','कॉशुर','hi-IN'],['ne-IN','Nepali','नेपाली','ne-NP'],['kok-IN','Konkani','कोंकणी','kok-IN'],['sd-IN','Sindhi','सिन्धी','hi-IN'],['doi-IN','Dogri','डोगरी','hi-IN'],['mni-IN','Meitei','মৈতৈলোন্','hi-IN'],['br-IN','Bodo','बड़ो','hi-IN']
+].map(([code,name,nativeName,speechCode]) => ({code: code as LanguageCode,name,nativeName,speechCode}));
 
-export const translations: Record<string, Record<string, string>> = {
-  'en-IN': {
-    dashboard: 'Dashboard', farmer: 'Farmer', fpo: 'FPO', buyer: 'Buyer', logistics: 'Logistics',
-    matching: 'Smart Matching', priceAI: 'Price AI', listProduce: 'List Your Produce',
-    addLot: 'Add New Lot', marketplace: 'Marketplace', demand: 'Post Demand',
-    wallet: 'Wallet', transparent: 'Transparent settlement', speak: 'Speak to list',
-  },
-  'hi-IN': { dashboard: 'डैशबोर्ड', farmer: 'किसान', fpo: 'एफपीओ', buyer: 'खरीदार', logistics: 'लॉजिस्टिक्स', matching: 'स्मार्ट मिलान', priceAI: 'मूल्य AI', listProduce: 'अपनी उपज सूचीबद्ध करें', addLot: 'नई खेप जोड़ें', marketplace: 'बाज़ार', demand: 'मांग पोस्ट करें', wallet: 'वॉलेट', transparent: 'पारदर्शी भुगतान', speak: 'बोलकर सूची बनाएं' },
-  'ta-IN': { dashboard: 'முகப்பு', farmer: 'விவசாயி', fpo: 'FPO', buyer: 'வாங்குபவர்', logistics: 'போக்குவரத்து', matching: 'ஸ்மார்ட் பொருத்தம்', priceAI: 'விலை AI', listProduce: 'உங்கள் விளைபொருளை பதிவு செய்யுங்கள்', addLot: 'புதிய தொகுதி', marketplace: 'சந்தை', demand: 'தேவையை பதிவு செய்', wallet: 'பணப்பை', transparent: 'வெளிப்படையான settlement', speak: 'பேசி பதிவு செய்யுங்கள்' },
-  'te-IN': { dashboard: 'డాష్‌బోర్డ్', farmer: 'రైతు', fpo: 'FPO', buyer: 'కొనుగోలుదారు', logistics: 'లాజిస్టిక్స్', matching: 'స్మార్ట్ మ్యాచ్', priceAI: 'ధర AI', listProduce: 'మీ పంటను జాబితా చేయండి', addLot: 'కొత్త లాట్', marketplace: 'మార్కెట్', demand: 'డిమాండ్ పోస్ట్ చేయండి', wallet: 'వాలెట్', transparent: 'పారదర్శక చెల్లింపు', speak: 'మాట్లాడి జాబితా చేయండి' },
-  'kn-IN': { dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', farmer: 'ರೈತ', fpo: 'FPO', buyer: 'ಖರೀದಿದಾರ', logistics: 'ಲಾಜಿಸ್ಟಿಕ್ಸ್', matching: 'ಸ್ಮಾರ್ಟ್ ಹೊಂದಾಣಿಕೆ', priceAI: 'ಬೆಲೆ AI', listProduce: 'ನಿಮ್ಮ ಉತ್ಪನ್ನ ಪಟ್ಟಿ ಮಾಡಿ', addLot: 'ಹೊಸ ಲಾಟ್', marketplace: 'ಮಾರುಕಟ್ಟೆ', demand: 'ಬೇಡಿಕೆ ಪೋಸ್ಟ್ ಮಾಡಿ', wallet: 'ವಾಲೆಟ್', transparent: 'ಪಾರದರ್ಶಕ ಪಾವತಿ', speak: 'ಮಾತನಾಡಿ ಪಟ್ಟಿ ಮಾಡಿ' },
-  'ml-IN': { dashboard: 'ഡാഷ്ബോർഡ്', farmer: 'കർഷകൻ', fpo: 'FPO', buyer: 'വാങ്ങുന്നയാൾ', logistics: 'ലോജിസ്റ്റിക്സ്', matching: 'സ്മാർട്ട് പൊരുത്തം', priceAI: 'വില AI', listProduce: 'നിങ്ങളുടെ ഉൽപ്പന്നം ലിസ്റ്റ് ചെയ്യുക', addLot: 'പുതിയ ലോട്ട്', marketplace: 'വിപണി', demand: 'ആവശ്യം പോസ്റ്റ് ചെയ്യുക', wallet: 'വാലറ്റ്', transparent: 'സുതാര്യമായ പേയ്മെന്റ്', speak: 'സംസാരിച്ച് ലിസ്റ്റ് ചെയ്യുക' },
-  'mr-IN': { dashboard: 'डॅशबोर्ड', farmer: 'शेतकरी', fpo: 'FPO', buyer: 'खरेदीदार', logistics: 'लॉजिस्टिक्स', matching: 'स्मार्ट जुळणी', priceAI: 'किंमत AI', listProduce: 'तुमचे उत्पादन नोंदवा', addLot: 'नवीन लॉट', marketplace: 'बाजार', demand: 'मागणी पोस्ट करा', wallet: 'वॉलेट', transparent: 'पारदर्शक पेमेंट', speak: 'बोलून नोंदवा' },
-  'bn-IN': { dashboard: 'ড্যাশবোর্ড', farmer: 'কৃষক', fpo: 'FPO', buyer: 'ক্রেতা', logistics: 'লজিস্টিক্স', matching: 'স্মার্ট ম্যাচিং', priceAI: 'মূল্য AI', listProduce: 'আপনার ফসল তালিকাভুক্ত করুন', addLot: 'নতুন লট', marketplace: 'বাজার', demand: 'চাহিদা পোস্ট করুন', wallet: 'ওয়ালেট', transparent: 'স্বচ্ছ পেমেন্ট', speak: 'কথা বলে তালিকাভুক্ত করুন' },
-  'gu-IN': { dashboard: 'ડેશબોર્ડ', farmer: 'ખેડૂત', fpo: 'FPO', buyer: 'ખરીદદાર', logistics: 'લોજિસ્ટિક્સ', matching: 'સ્માર્ટ મેચિંગ', priceAI: 'કિંમત AI', listProduce: 'તમારી ઉપજ લિસ્ટ કરો', addLot: 'નવો લોટ', marketplace: 'બજાર', demand: 'માંગ પોસ્ટ કરો', wallet: 'વૉલેટ', transparent: 'પારદર્શક ચુકવણી', speak: 'બોલીને લિસ્ટ કરો' },
-  'pa-IN': { dashboard: 'ਡੈਸ਼ਬੋਰਡ', farmer: 'ਕਿਸਾਨ', fpo: 'FPO', buyer: 'ਖਰੀਦਦਾਰ', logistics: 'ਲੌਜਿਸਟਿਕਸ', matching: 'ਸਮਾਰਟ ਮੈਚਿੰਗ', priceAI: 'ਕੀਮਤ AI', listProduce: 'ਆਪਣੀ ਉਪਜ ਸੂਚੀਬੱਧ ਕਰੋ', addLot: 'ਨਵਾਂ ਲਾਟ', marketplace: 'ਬਾਜ਼ਾਰ', demand: 'ਮੰਗ ਪੋਸਟ ਕਰੋ', wallet: 'ਵਾਲਿਟ', transparent: 'ਪਾਰਦਰਸ਼ੀ ਭੁਗਤਾਨ', speak: 'ਬੋਲ ਕੇ ਸੂਚੀ ਬਣਾਓ' },
+type Copy = Record<string,string>;
+const core = (dashboard:string, farmer:string, buyer:string, market:string, speak:string, transparent:string): Copy => ({ dashboard, farmer, fpo:'FPO', buyer, logistics:'Logistics', matching:'Smart Matching', priceAI:'Price AI', listProduce:speak, addLot:'Add New Lot', marketplace:market, demand:'Post Demand', wallet:'Wallet', transparent, speak });
+export const translations: Record<string, Copy> = {
+  'en-IN': core('Dashboard','Farmer','Buyer','Marketplace','Speak to list','Transparent settlement'),
+  'hi-IN': core('डैशबोर्ड','किसान','खरीदार','बाज़ार','बोलकर सूची बनाएं','पारदर्शी भुगतान'),
+  'ta-IN': core('முகப்பு','விவசாயி','வாங்குபவர்','சந்தை','பேசி பதிவு செய்யுங்கள்','வெளிப்படையான பணப்பரிவர்த்தனை'),
+  'te-IN': core('డాష్‌బోర్డ్','రైతు','కొనుగోలుదారు','మార్కెట్','మాట్లాడి జాబితా చేయండి','పారదర్శక చెల్లింపు'),
+  'kn-IN': core('ಡ್ಯಾಶ್‌ಬೋರ್ಡ್','ರೈತ','ಖರೀದಿದಾರ','ಮಾರುಕಟ್ಟೆ','ಮಾತನಾಡಿ ಪಟ್ಟಿ ಮಾಡಿ','ಪಾರದರ್ಶಕ ಪಾವತಿ'),
+  'ml-IN': core('ഡാഷ്ബോർഡ്','കർഷകൻ','വാങ്ങുന്നയാൾ','വിപണി','സംസാരിച്ച് ലിസ്റ്റ് ചെയ്യുക','സുതാര്യമായ പേയ്മെന്റ്'),
+  'mr-IN': core('डॅशबोर्ड','शेतकरी','खरेदीदार','बाजार','बोलून नोंदवा','पारदर्शक पेमेंट'),
+  'bn-IN': core('ড্যাশবোর্ড','কৃষক','ক্রেতা','বাজার','কথা বলে তালিকাভুক্ত করুন','স্বচ্ছ পেমেন্ট'),
+  'gu-IN': core('ડેશબોર્ડ','ખેડૂત','ખરીદદાર','બજાર','બોલીને લિસ્ટ કરો','પારદર્શક ચુકવણી'),
+  'pa-IN': core('ਡੈਸ਼ਬੋਰਡ','ਕਿਸਾਨ','ਖਰੀਦਦਾਰ','ਬਾਜ਼ਾਰ','ਬੋਲ ਕੇ ਸੂਚੀ ਬਣਾਓ','ਪਾਰਦਰਸ਼ੀ ਭੁਗਤਾਨ'),
+  'or-IN': core('ଡ୍ୟାସବୋର୍ଡ','ଚାଷୀ','କ୍ରେତା','ବଜାର','କଥା କହି ତାଲିକା କରନ୍ତୁ','ସ୍ୱଚ୍ଛ ଦେୟ'),
+  'as-IN': core('ড্যাশবোর্ড','কৃষক','ক্ৰেতা','বজাৰ','কথা কৈ তালিকাভুক্ত কৰক','স্বচ্ছ পৰিশোধ'),
+  'ur-IN': core('ڈیش بورڈ','کسان','خریدار','بازار','بول کر فہرست بنائیں','شفاف ادائیگی'),
+  'mai-IN': core('डैशबोर्ड','किसान','खरीदार','बजार','बोलि कऽ सूची बनाउ','पारदर्शी भुगतान'),
+  'sat-IN': core('ᱰᱟᱥᱵᱚᱨᱰ','ᱪᱟᱥᱤ','ᱠᱨᱮᱛᱟ','ᱵᱟᱡᱟᱨ','ᱨᱚᱲ ᱛᱮ ᱥᱩᱪᱤ ᱵᱟᱹᱭᱤᱭᱟ','ᱥᱟᱯᱷᱟ ᱯᱟᱭᱢᱮᱱᱴ'),
+  'ks-IN': core('ڈیش بورڈ','کسان','خریدار','بازار','بول کر فہرست بنائیں','شفاف ادائیگی'),
+  'ne-IN': core('ड्यासबोर्ड','किसान','खरिदार','बजार','बोलेर सूची बनाउनुहोस्','पारदर्शी भुक्तानी'),
+  'kok-IN': core('डॅशबोर्ड','शेतकार','घेणदार','बाजार','उलोवपाक लागीं नोंद करात','पारदर्शक पेमेंट'),
+  'sd-IN': core('ڊيش بورڊ','هاري','خريدار','بازار','ڳالهائي لسٽ ٺاهيو','شفاف ادائيگي'),
+  'doi-IN': core('डैशबोर्ड','किसान','खरीदार','बजार','बोलियै सूची बनाओ','पारदर्शी भुगतान'),
+  'mni-IN': core('ꯗꯦꯁꯕꯣꯔꯗ','ꯁꯤꯟꯅꯕ','ꯈꯔꯤꯗꯔ','ꯕꯥꯖꯥꯔ','ꯈꯣꯡꯒꯤ ꯅꯣꯡꯃꯤꯟꯅ ꯂꯤꯁ꯭ꯠ ꯇꯧꯕꯥ','ꯇ꯭ꯔꯥꯟꯁꯄꯔꯦꯟꯇ ꯄꯦꯃꯦꯟꯇ'),
+  'br-IN': core('डैशबोर्ड','किसान','खरीदार','बाजार','बोलकर सूची बनाएं','पारदर्शी भुगतान'),
 };
 
-export function getLanguage(code: string): LanguageOption {
-  return INDIAN_LANGUAGES.find((l) => l.code === code) ?? INDIAN_LANGUAGES[0];
-}
-
-export function t(code: string, key: string): string {
-  return translations[code]?.[key] ?? translations['en-IN'][key] ?? key;
-}
+export function getLanguage(code: string): LanguageOption { return INDIAN_LANGUAGES.find((l) => l.code === code) ?? INDIAN_LANGUAGES[0]; }
+export function t(code: string, key: string): string { return translations[code]?.[key] ?? translations['en-IN'][key] ?? key; }
