@@ -26,11 +26,11 @@ const COMMON: Record<string, Partial<Record<LangShort, string>>> = {
   Aggregation:{hi:'एकत्रीकरण',bn:'একত্রিকরণ',te:'సమీకరణ',mr:'एकत्रीकरण',ta:'திரட்டல்',gu:'એકત્રીકરણ',kn:'ಒಗ್ಗೂಡಿಸುವಿಕೆ',ml:'ശേഖരണം',pa:'ਇਕੱਠ',or:'ଏକତ୍ରୀକରଣ',as:'একত্ৰীকৰণ',ur:'مجموعہ'},
   Payments:{hi:'भुगतान',bn:'পেমেন্ট',te:'చెల్లింపులు',mr:'देयके',ta:'பணம் செலுத்துதல்',gu:'ચુકવણીઓ',kn:'ಪಾವತಿಗಳು',ml:'പേയ്മെന്റുകൾ',pa:'ਭੁਗਤਾਨ',or:'ଦେୟ',as:'পেমেন্ট',ur:'ادائیاں'},
   Reports:{hi:'रिपोर्ट',bn:'রিপোর্ট',te:'నివేదికలు',mr:'अहवाल',ta:'அறிக்கைகள்',gu:'રિપોર્ટ્સ',kn:'ವರದಿಗಳು',ml:'റിപ്പോർട്ടുകൾ',pa:'ਰਿਪੋਰਟਾਂ',or:'ରିପୋର୍ଟ',as:'ৰিপৰ্ট',ur:'رپورٹس'},
-  Settings:{hi:'सेटिंग्स',bn:'সেটিংস',te:'సెట్టింగ్‌లు',mr:'सेटिंग्ज',ta:'அமைப்புகள்',gu:'સેટિંગ્સ',kn:'ಸೆಟ್ಟಿಂಗ್‌ಗಳು',ml:'ക്രമീകരണങ്ങൾ',pa:'ਸੈਟਿੰਗਾਂ',or:'ସେଟିଂସ୍',as:'ছেটিংছ',ur:'ترتیبات'},
+  Settings:{hi:'सेटिंग्स',bn:'সেটিংস',te:'సెట్టింగ్‌లు',mr:'सेटिंग्ज',ta:'அமைப்புகள்',gu:'સેટિંગ્સ',kn:'ಸೆಟ್ಟಿಂಗ್‌ಗಳು',ml:'ക്രമീകരണങ്ങൾ',pa:'ਸੈਟਿੰਗਾਂ',or:'ସେଟିଂସ୍',as:'ছেটিংছ',ur:'ترتيبات'},
   Orders:{hi:'ऑर्डर',bn:'অর্ডার',te:'ఆర్డర్లు',mr:'ऑर्डर्स',ta:'ஆர்டர்கள்',gu:'ઓર્ડર્સ',kn:'ಆರ್ಡರ್‌ಗಳು',ml:'ഓർഡറുകൾ',pa:'ਆਰਡਰ',or:'ଅର୍ଡର',as:'অৰ্ডাৰ',ur:'آرڈرز'},
   'Create Demand':{hi:'मांग बनाएं',bn:'চাহিদা তৈরি করুন',te:'డిమాండ్ సృష్టించండి',mr:'मागणी तयार करा',ta:'தேவை உருவாக்கவும்',gu:'માંગ બનાવો',kn:'ಬೇಡಿಕೆ ರಚಿಸಿ',ml:'ഡിമാൻഡ് സൃഷ്ടിക്കുക',pa:'ਮੰਗ ਬਣਾਓ',or:'ଚାହିଦା ସୃଷ୍ଟି କରନ୍ତୁ',as:'চাহিদা সৃষ্টি কৰক',ur:'طلب بنائیں'},
   'View All':{hi:'सभी देखें',bn:'সব দেখুন',te:'అన్నీ చూడండి',mr:'सर्व पहा',ta:'அனைத்தையும் பார்க்கவும்',gu:'બધું જુઓ',kn:'ಎಲ್ಲವನ್ನೂ ನೋಡಿ',ml:'എല്ലാം കാണുക',pa:'ਸਭ ਵੇਖੋ',or:'ସବୁ ଦେଖନ୍ତୁ',as:'সকলো চাওক',ur:'سب دیکھیں'},
-  'View Details':{hi:'विवरण देखें',bn:'বিস্তারিত দেখুন',te:'వివరాలు చూడండి',mr:'तपशील पहा',ta:'விவரங்களைப் பார்க்கவும்',gu:'વિગતો જુઓ',kn:'ವಿವರಗಳನ್ನು ನೋಡಿ',ml:'വിശദാംಶങ്ങൾ കാണുക',pa:'ਵੇਰਵੇ ਵੇਖੋ',or:'ବିବରଣୀ ଦେଖନ୍ତୁ',as:'বিৱৰণ চাওক',ur:'تفصیلات دیکھیں'},
+  'View Details':{hi:'विवरण देखें',bn:'বিস্তারিত দেখুন',te:'వివరాలు చూడండి',mr:'तपशील पहा',ta:'விவரங்களைப் பார்க்கவும்',gu:'વિગતો જુઓ',kn:'ವಿವರಗಳನ್ನು ನೋಡಿ',ml:'വിശദാംശങ്ങൾ കാണുക',pa:'ਵੇਰਵੇ ਵੇਖੋ',or:'ବିବରଣୀ ଦେଖନ୍ତୁ',as:'বিৱৰণ চাওক',ur:'تفصیلات دیکھیں'},
   'Confirm listing':{hi:'लिस्टिंग की पुष्टि करें',bn:'তালিকা নিশ্চিত করুন',te:'జాబితాను నిర్ధారించండి',mr:'नोंदणीची पुष्टी करा',ta:'பதிவை உறுதிப்படுத்துங்கள்',gu:'લિસ્ટિંગની પુષ્ટિ કરો',kn:'ಪಟ್ಟಿಯನ್ನು ದೃಢೀಕರಿಸಿ',ml:'ലിസ്റ്റിംഗ് സ്ഥിരീകരിക്കുക',pa:'ਸੂਚੀ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ',or:'ତାଲିକା ନିଶ୍ଚିତ କରନ୍ତୁ',as:'তালিকা নিশ্চিত কৰক',ur:'فہرست کی تصدیق کریں'},
   Edit:{hi:'संपादित करें',bn:'সম্পাদনা করুন',te:'సవరించండి',mr:'संपादित करा',ta:'திருத்தவும்',gu:'ફેરફાર કરો',kn:'ತಿದ್ದುಪಡಿ ಮಾಡಿ',ml:'തിരുത്തുക',pa:'ਸੋਧੋ',or:'ସମ୍ପାଦନା କରନ୍ତୁ',as:'সম্পাদনা কৰক',ur:'ترمیم کریں'},
   'Good Morning':{hi:'सुप्रभात',bn:'সুপ্রভাত',te:'శుభోదయం',mr:'शुभ सकाळ',ta:'காலை வணக்கம்',gu:'સુપ્રભાત',kn:'ಶುಭೋದಯ',ml:'സുപ്രഭാതം',pa:'ਸ਼ੁਭ ਸਵੇਰ',or:'ସୁପ୍ରଭାତ',as:'সুপ্ৰভাত',ur:'صبح بخیر'},
@@ -44,41 +44,23 @@ const COMMON: Record<string, Partial<Record<LangShort, string>>> = {
   Verified:{hi:'सत्यापित',bn:'যাচাইকৃত',te:'ధృవీకరించబడింది',mr:'सत्यापित',ta:'சரிபார்க்கப்பட்டது',gu:'ચકાસાયેલ',kn:'ಪರಿಶೀಲಿಸಲಾಗಿದೆ',ml:'പരിശോധിച്ചു',pa:'ਪੜਤਾਲ ਕੀਤੀ',or:'ଯାଞ୍ଚିତ',as:'যাচাইকৃত',ur:'تصدیق شدہ'}
 };
 
-function shortCode(code: LanguageCode): LangShort | null {
-  const value = code.split('-')[0] as LangShort;
-  return (['hi','bn','te','mr','ta','gu','kn','ml','pa','or','as','ur'] as string[]).includes(value) ? value : null;
-}
+function shortCode(code: LanguageCode): LangShort | null { const value = code.split('-')[0] as LangShort; return (['hi','bn','te','mr','ta','gu','kn','ml','pa','or','as','ur'] as string[]).includes(value) ? value : null; }
 
 function translateNode(node: Text, language: LanguageCode) {
-  const original = node.nodeValue || '';
-  if (!original.trim()) return;
-  let next = original;
-  const short = shortCode(language);
-  for (const [english, map] of Object.entries(COMMON)) {
-    const translated = short ? map[short] : undefined;
-    if (translated && next.includes(english)) next = next.split(english).join(translated);
-  }
+  const original = node.nodeValue || ''; if (!original.trim()) return;
+  let next = original; const short = shortCode(language);
+  for (const [english, map] of Object.entries(COMMON)) { const translated = short ? map[short] : undefined; if (translated && next.includes(english)) next = next.split(english).join(translated); }
   if (next === original) {
     const keys = ['dashboard','farmer','fpo','buyer','logistics','matching','priceAI','marketplace','demand','wallet','transparent','speak'];
-    for (const key of keys) {
-      const english = t('en-IN', key);
-      const translated = t(language, key);
-      if (translated && translated !== english && next.includes(english)) next = next.split(english).join(translated);
-    }
+    for (const key of keys) { const english = t('en-IN', key); const translated = t(language, key); if (translated && translated !== english && next.includes(english)) next = next.split(english).join(translated); }
   }
   if (next !== original) node.nodeValue = next;
 }
 
 function translatePage(language: LanguageCode) {
   if (language === 'en-IN') return;
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  const nodes: Text[] = [];
-  let current: Node | null = walker.nextNode();
-  while (current) {
-    const parent = current.parentElement;
-    if (parent && !['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName) && !parent.closest('[data-no-translate="true"]')) nodes.push(current as Text);
-    current = walker.nextNode();
-  }
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const nodes: Text[] = []; let current: Node | null = walker.nextNode();
+  while (current) { const parent = current.parentElement; if (parent && !['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName) && !parent.closest('[data-no-translate="true"]')) nodes.push(current as Text); current = walker.nextNode(); }
   nodes.forEach((node) => translateNode(node, language));
 }
 
@@ -90,43 +72,20 @@ function hydrateCropArtwork() {
   };
   document.querySelectorAll<HTMLElement>('div.grid.h-12.w-12').forEach((art) => {
     if (art.dataset.cropArtwork === 'true') return;
-    const card = art.parentElement;
-    const name = card?.querySelector('.text-sm.font-black')?.textContent?.trim();
-    const category = name ? categoryByCrop[name] : undefined;
-    if (!category) return;
-    art.dataset.cropArtwork = 'true';
-    art.textContent = '';
-    art.classList.remove('text-2xl');
-    const img = document.createElement('img');
-    img.src = `/crops/${category}.svg`;
-    img.alt = name;
-    img.className = 'h-full w-full rounded-2xl object-cover';
-    art.appendChild(img);
+    const card = art.parentElement; const name = card?.querySelector('.text-sm.font-black')?.textContent?.trim();
+    if (!name) return;
+    const category = categoryByCrop[name]; if (!category) return;
+    art.dataset.cropArtwork = 'true'; art.textContent = ''; art.classList.remove('text-2xl');
+    const img = document.createElement('img'); img.src = `/crops/${category}.svg`; img.alt = name; img.className = 'h-full w-full rounded-2xl object-cover'; art.appendChild(img);
   });
 }
 
 export default function LocalizationRuntime() {
   useEffect(() => {
-    const apply = () => {
-      const value = (localStorage.getItem(KEY) as LanguageCode | null) || 'en-IN';
-      if (!INDIAN_LANGUAGES.some((x) => x.code === value)) return;
-      document.documentElement.lang = value;
-      window.setTimeout(() => { translatePage(value); hydrateCropArtwork(); }, 0);
-    };
-    apply();
-    const onChange = () => apply();
-    window.addEventListener('agriconnect-language-change', onChange);
+    const apply = () => { const value = (localStorage.getItem(KEY) as LanguageCode | null) || 'en-IN'; if (!INDIAN_LANGUAGES.some((x) => x.code === value)) return; document.documentElement.lang = value; window.setTimeout(() => { translatePage(value); hydrateCropArtwork(); }, 0); };
+    apply(); const onChange = () => apply(); window.addEventListener('agriconnect-language-change', onChange);
     let scheduled = false;
-    const observer = new MutationObserver(() => {
-      if (scheduled) return;
-      scheduled = true;
-      window.requestAnimationFrame(() => {
-        scheduled = false;
-        const value = (localStorage.getItem(KEY) as LanguageCode | null) || 'en-IN';
-        if (value !== 'en-IN') translatePage(value);
-        hydrateCropArtwork();
-      });
-    });
+    const observer = new MutationObserver(() => { if (scheduled) return; scheduled = true; window.requestAnimationFrame(() => { scheduled = false; const value = (localStorage.getItem(KEY) as LanguageCode | null) || 'en-IN'; if (value !== 'en-IN') translatePage(value); hydrateCropArtwork(); }); });
     observer.observe(document.body, { childList: true, subtree: true });
     return () => { window.removeEventListener('agriconnect-language-change', onChange); observer.disconnect(); };
   }, []);
