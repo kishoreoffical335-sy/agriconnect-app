@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import LocalizationRuntime from '@/components/LocalizationRuntime';
+import FullTranslationRuntime from '@/components/FullTranslationRuntime';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.className} min-h-screen bg-[#f7fbf3] text-slate-900`}>
         <Navbar />
         <LocalizationRuntime />
+        <FullTranslationRuntime />
         <main className="min-h-[calc(100vh-64px)]">{children}</main>
       </body>
     </html>
